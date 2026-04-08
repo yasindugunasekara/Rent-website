@@ -14,7 +14,7 @@ export default function Hero({ onSearch }) {
   };
 
   return (
-    <section className="relative bg-gradient-to-br from-primary via-secondary to-primary py-44 px-11">
+    <section className="relative bg-gradient-to-br from-primary via-secondary to-primary py-56 px-14">
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
           Find What You Need to Rent
