@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function AdCard({ ad, onDeleteClick }) {
   return (
-    <article className="rounded-2xl bg-white p-3 shadow-md transition duration-200 hover:scale-[1.01]">
+    <article className="rounded-xl bg-white p-3 shadow-md transition duration-200 hover:scale-[1.01]">
       <div className="relative h-44 overflow-hidden rounded-xl">
         <Image
           src={ad.image}

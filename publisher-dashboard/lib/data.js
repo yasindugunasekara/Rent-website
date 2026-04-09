@@ -33,7 +33,7 @@ export const mockAds = [
     category: "vehicles",
     contactNumber: "+1 555 220 1150",
     available: true,
-    image: "https://placehold.co/800x600/F9FAFB/0B3D2E?text=Mountain+Bike",
+    image: "https://res.cloudinary.com/dcgfwnzzr/image/upload/v1758995063/cld-sample-5.jpg",
     createdAt: "2026-04-04T11:00:00.000Z",
   },
   {
@@ -45,7 +45,18 @@ export const mockAds = [
     category: "tools",
     contactNumber: "+1 555 320 9999",
     available: true,
-    image: "https://placehold.co/800x600/F9FAFB/0B3D2E?text=Power+Drill",
+    image: "https://res.cloudinary.com/dcgfwnzzr/image/upload/v1758995059/samples/shoe.jpg",
     createdAt: "2026-04-03T09:30:00.000Z",
-  },
+  },{
+    id: "ad-3",
+    title: "Cozy 1-Bedroom Apartment",
+    description: "Perfect for short stays, close to downtown and public transit.",
+    price: 80,
+    location: "New York",
+    category: "property",
+    contactNumber: "+1 555 450 1234",
+    available: true,
+    image: "https://res.cloudinary.com/dcgfwnzzr/image/upload/v1758995059/samples/shoe.jpg",
+    createdAt: "2026-04-02T14:15:00.000Z",
+  }
 ];
