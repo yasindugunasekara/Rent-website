@@ -3,7 +3,7 @@
 import { useState, use, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Phone, X } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, X, ChevronLeft, ChevronRight, ShieldCheck, User } from "lucide-react";
 import { mockItems } from "../../../data/mockItems";
 
 export default function ItemDetails({ params }) {
@@ -18,7 +18,16 @@ export default function ItemDetails({ params }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!item) {
-    return <h1 className="text-center mt-10 text-xl">Item Not Found</h1>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-textMain mb-2">Item Not Found</h1>
+          <button onClick={() => router.push('/')} className="text-primary hover:underline">
+            Return to Homepage
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const images = [
@@ -28,193 +37,217 @@ export default function ItemDetails({ params }) {
     "https://images.pexels.com/photos/699558/pexels-photo-699558.jpeg",
   ];
 
-  // 🔥 Navigation functions
-  const nextImage = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
+  const nextImage = () => setCurrentIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () => setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
 
-  const prevImage = () => {
-    setCurrentIndex((prev) =>
-      prev === 0 ? images.length - 1 : prev - 1
-    );
-  };
-
-  // 🔥 Keyboard support
   useEffect(() => {
     const handleKey = (e) => {
       if (!showPreview) return;
-
       if (e.key === "ArrowRight") nextImage();
       if (e.key === "ArrowLeft") prevImage();
       if (e.key === "Escape") setShowPreview(false);
     };
-
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [showPreview]);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-
-      {/* 🔙 Back */}
-      <button
-        onClick={() => {
-          if (window.history.length > 1) {
-            router.back();
-          } else {
-            router.push("/");
-          }
-        }}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white shadow hover:bg-gray-100 transition mb-8"
-      >
-        <ArrowLeft size={18} />
-        Back
-      </button>
-
-      {/* 🔥 Layout */}
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
-
-        {/* 🖼 LEFT */}
-        <div className="flex gap-4">
-
-          {/* Thumbnails */}
-          <div className="flex flex-col gap-3">
-            {images.map((img, i) => (
-              <div
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                className={`relative w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition
-                  ${
-                    currentIndex === i
-                      ? "border-primary scale-105"
-                      : "border-gray-200 hover:border-primary"
-                  }`}
-              >
-                <Image src={img} alt="thumb" fill className="object-cover" />
-              </div>
-            ))}
-          </div>
-
-          {/* Main Image */}
-          <div
-            onClick={() => setShowPreview(true)}
-            className="relative flex-1 h-[420px] rounded-xl overflow-hidden bg-white shadow cursor-zoom-in"
+    // Added pb-28 for mobile to ensure the bottom fixed bar doesn't hide content
+    <div className="min-h-screen bg-background pb-28 lg:pb-20">
+      
+      <div className="bg-surface border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <button
+            onClick={() => window.history.length > 1 ? router.back() : router.push("/dashboard")}
+            className="inline-flex items-center gap-2 text-textMuted hover:text-textMain font-medium transition-colors"
           >
-            <Image
-              src={images[currentIndex]}
-              alt={item.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-
+            <ArrowLeft className="w-5 h-5" />
+            Back to search
+          </button>
         </div>
+      </div>
 
-        {/* 📄 RIGHT */}
-        <div className="flex flex-col justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* 📄 LEFT COLUMN: Images & Details */}
+          <div className="lg:col-span-8 flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              <div 
+                onClick={() => setShowPreview(true)}
+                className="relative w-full aspect-[4/3] md:aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 cursor-zoom-in group border border-gray-200"
+              >
+                <Image
+                  src={images[currentIndex]}
+                  alt={item.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                  <span className="opacity-0 group-hover:opacity-100 bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur-sm transition-opacity duration-300">
+                    Click to enlarge
+                  </span>
+                </div>
+              </div>
 
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              {item.title}
-            </h1>
-
-            <div className="flex items-center text-gray-500 mb-4">
-              <MapPin className="w-4 h-4 mr-1" />
-              {item.location}
+              <div className="grid grid-cols-4 gap-4">
+                {images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIndex(i)}
+                    className={`relative aspect-[4/3] rounded-xl overflow-hidden border-2 transition-all
+                      ${currentIndex === i ? "border-primary opacity-100" : "border-transparent opacity-60 hover:opacity-100"}`}
+                  >
+                    <Image src={img} alt={`thumbnail-${i}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="text-3xl font-bold text-primary mb-6">
-              ${item.price}
-              <span className="text-lg text-gray-500"> / day</span>
-            </div>
+            <hr className="border-gray-200" />
 
-            <p className="text-gray-600 leading-relaxed mb-8">
-              {item.description ||
-                "High quality rental item, reliable and perfect for your needs."}
-            </p>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                  {item.category || "Rental Item"}
+                </span>
+              </div>
+              
+              <h1 className="text-3xl md:text-4xl font-extrabold text-textMain mb-4 leading-tight">
+                {item.title}
+              </h1>
+
+              <div className="flex items-center text-textMuted text-lg mb-8">
+                <MapPin className="w-5 h-5 mr-2 text-primary" />
+                {item.location}
+              </div>
+
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-textMain">Description</h2>
+                <p className="text-textMuted text-lg leading-relaxed">
+                  {item.description || "Experience top-quality service with this reliable rental item. Perfect for your needs, maintained in excellent condition, and ready for immediate use. Contact the owner today to secure your booking."}
+                </p>
+              </div>
+            </div>
           </div>
 
+          {/* 💰 RIGHT COLUMN: Sticky Action Card (DESKTOP ONLY BEHAVIOR) */}
+          <div className="lg:col-span-4">
+            {/* hidden on small screens because the bottom bar takes over the main action */}
+            <div className="bg-surface rounded-3xl p-8 border border-gray-200 shadow-xl sticky top-24 hidden lg:block">
+              <div className="mb-6">
+                <span className="text-4xl font-extrabold text-textMain">${item.price}</span>
+                <span className="text-lg text-textMuted font-medium"> / day</span>
+              </div>
+
+              <button
+                onClick={() => setShowModal(true)}
+                className="w-full bg-primary hover:bg-primaryHover text-white text-lg font-bold py-4 rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg mb-6"
+              >
+                Request to Rent
+              </button>
+
+              <div className="space-y-4 pt-6 border-t border-gray-100">
+                <div className="flex items-center gap-4 text-textMain">
+                  <div className="bg-green-100 p-2 rounded-full text-success">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <span className="font-medium">Secure global platform</span>
+                </div>
+                <div className="flex items-center gap-4 text-textMain">
+                  <div className="bg-blue-100 p-2 rounded-full text-primary">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <span className="font-medium">Verified Publisher</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🔥 MOBILE STICKY BOTTOM BAR (Visible only on small screens) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-200 p-4 z-40 lg:hidden shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div>
+            <span className="text-2xl font-extrabold text-textMain">${item.price}</span>
+            <span className="text-sm font-medium text-textMuted"> / day</span>
+          </div>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl text-lg font-medium transition w-full"
+            className="bg-primary hover:bg-primaryHover text-white text-base font-bold px-8 py-3 rounded-xl transition-all duration-200 shadow-md"
           >
             Rent Now
           </button>
         </div>
-
       </div>
 
       {/* 🔥 CONTACT MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-
-          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6">
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-textMain/40 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="relative w-full max-w-md bg-surface rounded-3xl shadow-2xl p-8">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+              className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <X className="w-5 h-5 text-gray-600" />
+              <X className="w-6 h-6 text-textMuted" />
             </button>
 
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Contact Owner
-            </h2>
+            <h2 className="text-2xl font-bold text-textMain mb-2">Contact Owner</h2>
+            <p className="text-textMuted mb-8">Reach out directly to finalize your rental details.</p>
 
-            <a
-              href={`tel:${item.phone}`}
-              className="flex items-center gap-4 p-4 rounded-2xl bg-green-100 hover:bg-green-200 transition mb-4"
-            >
-              <div className="bg-green-500 text-white p-3 rounded-xl">
-                <Phone className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-semibold">Call Now</p>
-                <p className="text-sm text-gray-500">{item.phone}</p>
-              </div>
-            </a>
+            <div className="space-y-4">
+              <a
+                href={`tel:${item.phone}`}
+                className="flex items-center gap-5 p-5 rounded-2xl bg-background border border-gray-200 hover:border-primary hover:shadow-md transition-all group"
+              >
+                <div className="bg-primary/10 text-primary p-3 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-bold text-textMain text-lg">Call Owner</p>
+                  <p className="text-textMuted">{item.phone}</p>
+                </div>
+              </a>
 
-            <a
-              href={item.mapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-2xl bg-blue-100 hover:bg-blue-200 transition"
-            >
-              <div className="bg-blue-500 text-white p-3 rounded-xl">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-semibold">View Location</p>
-                <p className="text-sm text-gray-500">Open Google Maps</p>
-              </div>
-            </a>
-
+              <a
+                href={item.mapUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-5 p-5 rounded-2xl bg-background border border-gray-200 hover:border-success hover:shadow-md transition-all group"
+              >
+                <div className="bg-success/10 text-success p-3 rounded-xl group-hover:bg-success group-hover:text-white transition-colors">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-bold text-textMain text-lg">View Location</p>
+                  <p className="text-textMuted">Open in Google Maps</p>
+                </div>
+              </a>
+            </div>
           </div>
         </div>
       )}
 
       {/* 🔥 FULLSCREEN IMAGE PREVIEW */}
       {showPreview && (
-        <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center">
-
-          {/* Close */}
+        <div className="fixed inset-0 z-[60] bg-textMain/95 backdrop-blur-md flex items-center justify-center animate-fadeIn">
           <button
             onClick={() => setShowPreview(false)}
-            className="absolute top-6 right-6 text-white bg-black/50 p-3 rounded-full"
+            className="absolute top-6 right-6 text-white/70 hover:text-white p-3 transition-colors"
           >
-            ✕
+            <X className="w-8 h-8" />
           </button>
 
-          {/* Prev */}
           <button
             onClick={prevImage}
-            className="absolute left-6 text-white text-4xl bg-black/40 px-4 py-2 rounded-full"
+            className="absolute left-4 md:left-10 text-white/70 hover:text-white p-4 transition-colors"
           >
-            ‹
+            <ChevronLeft className="w-12 h-12" />
           </button>
 
-          {/* Image */}
-          <div className="relative w-full max-w-5xl h-[80vh]">
+          <div className="relative w-full max-w-6xl h-[85vh] px-16">
             <Image
               src={images[currentIndex]}
               alt="preview"
@@ -223,14 +256,12 @@ export default function ItemDetails({ params }) {
             />
           </div>
 
-          {/* Next */}
           <button
             onClick={nextImage}
-            className="absolute right-6 text-white text-4xl bg-black/40 px-4 py-2 rounded-full"
+            className="absolute right-4 md:right-10 text-white/70 hover:text-white p-4 transition-colors"
           >
-            ›
+            <ChevronRight className="w-12 h-12" />
           </button>
-
         </div>
       )}
     </div>

@@ -2,37 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
+@layer base {
+  /* Prevent horizontal scrolling issues on mobile devices */
+  html,
+  body {
+    @apply max-w-[100vw] overflow-x-hidden;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
+
+  /* Apply global theme colors and smooth fonts */
+  body {
+    @apply bg-background text-textMain antialiased;
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.25s ease-in-out;
+@layer utilities {
+  /* Custom animations */
+  .animate-fadeIn {
+    animation: fadeIn 0.25s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }
