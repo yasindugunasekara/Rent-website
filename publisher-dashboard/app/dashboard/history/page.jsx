@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PackageSearch, Plus } from "lucide-react";
+import { PackageSearch, Plus, LayoutGrid, AlertCircle, Loader2 } from "lucide-react";
 import AdCard from "@/components/AdCard";
 import ConfirmModal from "@/components/ConfirmModal";
 import { useDashboard } from "@/lib/DashboardContext";
@@ -27,80 +27,97 @@ export default function HistoryPage() {
   };
 
   return (
-    <>
-      {/* LIGHT THEME BACKGROUND: A very soft off-white/zinc color */}
-      <div className="fixed inset-0 bg-zinc-50 -z-10" />
-
-      <section 
-        className={`p-4 sm:p-8 md:p-12 min-h-screen space-y-8 transition-all duration-700 ease-out transform ${
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-        }`}
-      >
-        {/* HEADER SECTION */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-200 pb-6">
-          <div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">
+    <div className={`w-full max-w-7xl mx-auto animate-fadeIn transition-all duration-700 ease-out transform ${
+      isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+    }`}>
+      
+      {/* --- HEADER SECTION --- */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-6 border-b border-gray-100">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <LayoutGrid className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-textMain tracking-tight">
               My Listings
             </h2>
-            <p className="mt-2 text-sm sm:text-base text-zinc-500">
-              View, edit, or remove your published rental ads.
-            </p>
+          </div>
+          <p className="text-base text-textMuted leading-relaxed">
+            You have <span className="font-bold text-textMain">{ads.length}</span> active listings. Manage, edit or promote them.
+          </p>
+        </div>
+        
+        {/* Quick Create Button (Aligned with our Blue Theme) */}
+        {ads.length > 0 && (
+          <Link
+            href="/dashboard/create"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-primaryHover hover:-translate-y-0.5 active:scale-95"
+          >
+            <Plus size={20} />
+            Create New Listing
+          </Link>
+        )}
+      </div>
+
+      {/* --- CONTENT AREA --- */}
+      {ads.length === 0 ? (
+        /* 🚀 MODERN EMPTY STATE */
+        <div className="flex flex-col items-center justify-center rounded-[2.5rem] bg-surface border border-gray-100 p-12 sm:p-24 text-center shadow-sm">
+          <div className="relative mb-8">
+            <div className="absolute -inset-4 bg-primary/5 rounded-full blur-2xl animate-pulse"></div>
+            <div className="relative rounded-full bg-background border border-gray-100 p-8">
+              <PackageSearch size={64} className="text-gray-300" />
+            </div>
           </div>
           
-          {/* Quick Create Button (Light theme styling) */}
-          {ads.length > 0 && (
-            <Link
-              href="/dashboard/create"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-700 shadow-sm border border-zinc-200 transition-all hover:bg-zinc-50 hover:border-zinc-300 hover:scale-105 active:scale-95"
-            >
-              <Plus size={18} />
-              New Ad
-            </Link>
-          )}
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-textMain mb-3">Your shop is empty</h3>
+          <p className="text-lg text-textMuted max-w-md mx-auto mb-10 leading-relaxed">
+            Start earning today by listing your first item. It takes less than 2 minutes!
+          </p>
+          
+          <Link
+            href="/dashboard/create"
+            className="group flex items-center gap-3 rounded-2xl bg-primary px-10 py-5 text-xl font-bold text-white shadow-xl shadow-primary/20 transition-all duration-300 hover:bg-primaryHover hover:shadow-2xl hover:-translate-y-1 active:scale-95"
+          >
+            <Plus size={24} className="transition-transform group-hover:rotate-90" />
+            Post Your First Ad
+          </Link>
         </div>
-
-        {/* CONTENT AREA */}
-        {ads.length === 0 ? (
-          /* LIGHT THEME EMPTY STATE */
-          <div className="flex flex-col items-center justify-center rounded-[2rem] bg-white border border-zinc-100 p-12 sm:p-20 text-center shadow-xl transition-all duration-500 hover:shadow-2xl">
-            <div className="mb-6 rounded-full bg-zinc-50 border border-zinc-100 p-6 shadow-inner">
-              <PackageSearch size={48} className="text-zinc-300" />
-            </div>
-            <h3 className="mb-2 text-2xl font-bold text-zinc-900">No listings found</h3>
-            <p className="mb-8 max-w-md text-zinc-500">
-              You haven't published any items for rent yet. Create your first ad to start earning!
-            </p>
-            <Link
-              href="/dashboard/create"
-              className="group flex items-center gap-2 rounded-full bg-[#D4A353] px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-300 hover:bg-[#e0b060] hover:shadow-xl hover:-translate-y-1 active:scale-95"
+      ) : (
+        /* 📱 RESPONSIVE GRID FOR LISTINGS */
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-20">
+          {ads.map((ad) => (
+            <div 
+              key={ad.id} 
+              className="group transition-all duration-300 hover:-translate-y-2"
             >
-              <Plus size={24} className="transition-transform group-hover:rotate-90" />
-              Create Your First Ad
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {ads.map((ad) => (
-              <div 
-                key={ad.id} 
-                className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl rounded-2xl bg-white border border-zinc-100 overflow-hidden"
-              >
+              <div className="h-full rounded-2xl bg-surface border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300">
                 <AdCard ad={ad} onDeleteClick={setSelectedAd} />
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
 
-        {/* MODAL */}
-        <ConfirmModal
-          isOpen={Boolean(selectedAd)}
-          title="Delete Listing"
-          message="Are you sure you want to permanently delete this ad? This action cannot be undone."
-          onCancel={() => setSelectedAd(null)}
-          onConfirm={handleConfirmDelete}
-          loading={deleting}
-        />
-      </section>
-    </>
+      {/* --- CONFIRMATION MODAL --- */}
+      <ConfirmModal
+        isOpen={Boolean(selectedAd)}
+        title={
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="w-5 h-5" />
+            <span>Delete Listing?</span>
+          </div>
+        }
+        message={
+          <span className="text-textMuted leading-relaxed">
+            Are you sure you want to delete <span className="font-bold text-textMain">"{selectedAd?.title}"</span>? 
+            This action is permanent and your listing data will be lost forever.
+          </span>
+        }
+        onCancel={() => setSelectedAd(null)}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+      />
+    </div>
   );
 }
