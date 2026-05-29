@@ -1,18 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Image from "next/image";
-import { ImagePlus, AlertCircle, X, PlusCircle } from "lucide-react";
+import dynamic from "next/dynamic";
+import { ImagePlus, AlertCircle, X, PlusCircle, MapPin } from "lucide-react";
 import { categoryOptions, locationOptions } from "@/lib/data";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
+
+// Dynamically import LocationPicker with SSR disabled
+const LocationPicker = dynamic(
+  () => import("@/components/LocationPicker"),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="h-[400px] w-full bg-gray-100 dark:bg-zinc-800 rounded-2xl animate-pulse flex flex-col items-center justify-center text-textMuted">
+        <MapPin className="w-8 h-8 mb-2 opacity-20" />
+        <p className="text-sm font-medium">Loading Interactive Map...</p>
+      </div>
+    )
+  }
+);
 
 const initialForm = {
   title: "",
   description: "",
   price: "",
-  location: "",
+  location: "", // Stores the readable address
+  latitude: null,
+  longitude: null,
   category: "",
-  imageUrls: [""], // Changed from 'image' to 'imageUrls' array
+  imageUrls: [""],
   contactNumber: "",
   available: true,
 };
@@ -32,36 +49,46 @@ export default function AdForm({
 
   const descriptionCount = useMemo(() => form.description.length, [form.description]);
 
-  const handleChange = (event) => {
+  const handleChange = useCallback((event) => {
     const { name, value, type, checked } = event.target;
     const nextValue = type === "checkbox" ? checked : value;
     setForm((prev) => ({ ...prev, [name]: nextValue }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
-  };
+  }, [errors]);
 
-  const handleImageUrlChange = (index, value) => {
+  const handleLocationSelect = useCallback((locationData) => {
+    setForm((prev) => ({
+      ...prev,
+      location: locationData.address,
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+    }));
+    if (errors.location) setErrors((prev) => ({ ...prev, location: null }));
+  }, [errors]);
+
+  const handleImageUrlChange = useCallback((index, value) => {
     const nextUrls = [...form.imageUrls];
     nextUrls[index] = value;
     setForm((prev) => ({ ...prev, imageUrls: nextUrls }));
     if (errors.imageUrls) setErrors((prev) => ({ ...prev, imageUrls: null }));
-  };
+  }, [errors, form.imageUrls]);
 
-  const addImageField = () => {
+  const addImageField = useCallback(() => {
     setForm((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ""] }));
-  };
+  }, []);
 
-  const removeImageField = (index) => {
+  const removeImageField = useCallback((index) => {
     if (form.imageUrls.length <= 1) return;
     const nextUrls = form.imageUrls.filter((_, i) => i !== index);
     setForm((prev) => ({ ...prev, imageUrls: nextUrls }));
-  };
+  }, [form.imageUrls]);
 
   const validate = () => {
     const nextErrors = {};
     if (!sanitizeText(form.title)) nextErrors.title = "Title is required.";
     if (!sanitizeText(form.description)) nextErrors.description = "Description is required.";
     if (!Number(form.price) || Number(form.price) <= 0) nextErrors.price = "Enter a valid price.";
-    if (!sanitizeText(form.location)) nextErrors.location = "Location is required.";
+    if (!sanitizeText(form.location)) nextErrors.location = "Please select a location on the map.";
     if (!sanitizeText(form.category)) nextErrors.category = "Category is required.";
     if (!sanitizePhone(form.contactNumber))
       nextErrors.contactNumber = "Valid contact number is required.";
@@ -77,7 +104,6 @@ export default function AdForm({
     event.preventDefault();
     if (!validate()) return;
     
-    // Clean up empty URLs before submitting
     const cleanedForm = {
       ...form,
       imageUrls: form.imageUrls.filter(url => url.trim() !== "")
@@ -100,7 +126,7 @@ export default function AdForm({
       
       {/* --- BASIC INFORMATION --- */}
       <section className="space-y-5">
-        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 pb-2">Basic Information</h3>
+        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 dark:border-zinc-800 pb-2">Basic Information</h3>
         
         <div className="space-y-2">
           <label htmlFor="title" className="text-sm font-bold text-textMain">
@@ -114,7 +140,7 @@ export default function AdForm({
             value={form.title}
             onChange={handleChange}
             className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 
-              ${errors.title ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
+              ${errors.title ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
           />
           <ErrorMsg msg={errors.title} />
         </div>
@@ -132,7 +158,7 @@ export default function AdForm({
             value={form.description}
             onChange={handleChange}
             className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 
-              ${errors.description ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
+              ${errors.description ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
           />
           <div className="flex justify-between items-center mt-1">
             <ErrorMsg msg={errors.description} />
@@ -160,7 +186,7 @@ export default function AdForm({
               value={form.price}
               onChange={handleChange}
               className={`w-full rounded-xl border bg-background pl-8 pr-4 py-3 outline-none transition-all duration-200 
-                ${errors.price ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
+                ${errors.price ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
             />
           </div>
           <ErrorMsg msg={errors.price} />
@@ -178,60 +204,50 @@ export default function AdForm({
             value={form.contactNumber}
             onChange={handleChange}
             className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 
-              ${errors.contactNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
+              ${errors.contactNumber ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
           />
           <ErrorMsg msg={errors.contactNumber} />
         </div>
       </section>
 
-      {/* --- CATEGORY & LOCATION --- */}
-      <section className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-2">
-          <label htmlFor="location" className="text-sm font-bold text-textMain">
-            Location <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="location"
-            name="location"
-            disabled={isSubmitting}
-            value={form.location}
-            onChange={handleChange}
-            className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 cursor-pointer
-              ${errors.location ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
-          >
-            <option value="">Select location</option>
-            {locationOptions.map((location) => (
-              <option key={location} value={location}>{location}</option>
-            ))}
-          </select>
-          <ErrorMsg msg={errors.location} />
-        </div>
+      {/* --- CATEGORY --- */}
+      <section className="space-y-2">
+        <label htmlFor="category" className="text-sm font-bold text-textMain">
+          Category <span className="text-red-500">*</span>
+        </label>
+        <select
+          id="category"
+          name="category"
+          disabled={isSubmitting}
+          value={form.category}
+          onChange={handleChange}
+          className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 cursor-pointer
+            ${errors.category ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
+        >
+          <option value="">Select category</option>
+          {categoryOptions.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+        </select>
+        <ErrorMsg msg={errors.category} />
+      </section>
 
-        <div className="space-y-2">
-          <label htmlFor="category" className="text-sm font-bold text-textMain">
-            Category <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="category"
-            name="category"
-            disabled={isSubmitting}
-            value={form.category}
-            onChange={handleChange}
-            className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 cursor-pointer
-              ${errors.category ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
-          >
-            <option value="">Select category</option>
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-          <ErrorMsg msg={errors.category} />
-        </div>
+      {/* --- SMART LOCATION PICKER --- */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 dark:border-zinc-800 pb-2">Location Details</h3>
+        <p className="text-sm text-textMuted">Search or pinpoint your item's location on the map.</p>
+        
+        <LocationPicker 
+          onLocationSelect={handleLocationSelect} 
+          initialLocation={form.latitude ? { lat: form.latitude, lng: form.longitude } : null}
+          initialAddress={form.location}
+        />
+        <ErrorMsg msg={errors.location} />
       </section>
 
       {/* --- MULTIPLE IMAGES --- */}
       <section className="space-y-4">
-        <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+        <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
           <h3 className="text-lg font-bold text-textMain">Item Images</h3>
           <button
             type="button"
@@ -252,7 +268,7 @@ export default function AdForm({
                     placeholder="https://example.com/image.jpg"
                     value={url}
                     onChange={(e) => handleImageUrlChange(index, e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 bg-background px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-700 bg-background px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                   />
                   {form.imageUrls.length > 1 && (
                     <button
@@ -265,7 +281,7 @@ export default function AdForm({
                   )}
                 </div>
                 {url && (
-                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900">
                     <img
                       src={url}
                       alt={`Preview ${index + 1}`}
@@ -284,7 +300,7 @@ export default function AdForm({
       </section>
 
       {/* --- AVAILABILITY TOGGLE --- */}
-      <section className="flex items-center justify-between rounded-2xl bg-background border border-gray-100 px-6 py-5">
+      <section className="flex items-center justify-between rounded-2xl bg-background border border-gray-100 dark:border-zinc-800 px-6 py-5">
         <div>
           <p className="text-base font-bold text-textMain">Item Availability</p>
           <p className="text-sm text-textMuted">Allow users to see and rent this item immediately.</p>
@@ -298,7 +314,7 @@ export default function AdForm({
             disabled={isSubmitting}
             className="sr-only peer" 
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-success/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-success"></div>
+          <div className="w-14 h-7 bg-gray-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-success/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-success"></div>
         </label>
       </section>
       

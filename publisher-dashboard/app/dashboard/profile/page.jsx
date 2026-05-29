@@ -4,18 +4,26 @@ import { useState } from "react";
 import ProfileForm from "@/components/ProfileForm";
 import { useDashboard } from "@/lib/DashboardContext";
 // Modern UI සඳහා Icon එකතු කළා
-import { UserCircle2 } from "lucide-react";
+import { UserCircle2, Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { profile, updateProfile } = useDashboard();
+  const { profile, updateProfile, loading } = useDashboard();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    updateProfile(data);
+    await updateProfile(data);
     setIsSubmitting(false);
   };
+
+  if (loading || !profile) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+        <p className="text-textMuted font-medium">Loading your profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto animate-fadeIn w-full">

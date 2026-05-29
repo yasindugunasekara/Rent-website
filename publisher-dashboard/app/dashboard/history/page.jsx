@@ -90,16 +90,9 @@ export default function HistoryPage() {
         </div>
       ) : (
         /* 📱 RESPONSIVE GRID FOR LISTINGS */
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-20">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-20">
           {ads.map((ad) => (
-            <div 
-              key={ad.id} 
-              className="group transition-all duration-300 hover:-translate-y-2"
-            >
-              <div className="h-full rounded-2xl bg-surface border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300">
-                <AdCard ad={ad} onDeleteClick={setSelectedAd} />
-              </div>
-            </div>
+            <AdCard key={ad.id} ad={ad} onDeleteClick={setSelectedAd} />
           ))}
         </div>
       )}

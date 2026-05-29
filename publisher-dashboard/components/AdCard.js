@@ -10,12 +10,12 @@ export default function AdCard({ ad, onDeleteClick }) {
     <article className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-lg border border-zinc-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       
       {/* IMAGE SECTION */}
-      <div className="relative w-full aspect-square bg-zinc-50">
+      <Link href={`/dashboard/view/${ad.id}`} className="relative w-full aspect-square bg-zinc-50 cursor-pointer overflow-hidden group">
         <Image
           src={displayImage}
           alt={ad.title}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           unoptimized={true} // Since we use external URLs
         />
@@ -24,12 +24,14 @@ export default function AdCard({ ad, onDeleteClick }) {
             +{ad.images.length - 1} Photos
           </div>
         )}
-      </div>
+      </Link>
 
       {/* DETAILS & BUTTONS SECTION */}
       <div className="flex flex-col flex-grow p-5">
         <div className="space-y-1.5 mb-5">
-          <h3 className="line-clamp-1 text-lg font-bold text-zinc-900">{ad.title}</h3>
+          <Link href={`/dashboard/view/${ad.id}`}>
+            <h3 className="line-clamp-1 text-lg font-bold text-zinc-900 hover:text-primary transition-colors cursor-pointer">{ad.title}</h3>
+          </Link>
           <p className="text-sm font-medium text-zinc-500">{ad.location}</p>
           <p className="text-base font-bold text-[#D4A353]">${ad.price}/day</p>
         </div>

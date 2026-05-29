@@ -17,7 +17,11 @@ namespace backend.Models
         [Required]
         public decimal Price { get; set; }
 
-        public string Location { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty; // Full address string
+
+        public double? Latitude { get; set; }
+        
+        public double? Longitude { get; set; }
 
         public string Category { get; set; } = string.Empty;
 

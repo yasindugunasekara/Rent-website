@@ -24,12 +24,12 @@ function SessionWatcher({ children }) {
 
       if (timeUntilExpiry > 0) {
         const timer = setTimeout(() => {
-          signOut({ callbackUrl: "/login" });
+          signOut({ callbackUrl: `${window.location.origin}/login` });
         }, timeUntilExpiry);
 
         return () => clearTimeout(timer);
       } else {
-        signOut({ callbackUrl: "/login" });
+        signOut({ callbackUrl: `${window.location.origin}/login` });
       }
     }
   }, [session, status]);

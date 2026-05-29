@@ -26,6 +26,11 @@ namespace backend.Models
         [MaxLength(20)]
         public string Role { get; set; } = "publisher"; // "admin" or "publisher"
 
+        public string? Phone { get; set; }
+        public string? Location { get; set; }
+        public string? Bio { get; set; }
+        public string? ProfilePic { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

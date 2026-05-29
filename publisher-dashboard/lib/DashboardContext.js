@@ -40,10 +40,37 @@ export function DashboardProvider({ children }) {
     }
   };
 
+  // Fetch profile
+  const fetchProfile = async () => {
+    if (!session?.accessToken) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/Profile`, {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProfile({
+          name: `${data.firstName} ${data.lastName}`,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone || "",
+          location: data.location || "",
+          bio: data.bio || "",
+          profilePic: data.profilePic || "",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
   useEffect(() => {
     if (session) {
       fetchMyAds();
-      setProfile(session.user);
+      fetchProfile();
     }
   }, [session]);
 
@@ -66,8 +93,11 @@ export function DashboardProvider({ children }) {
               description: sanitizeText(data.description),
               price: Number(data.price),
               location: sanitizeText(data.location),
+              latitude: data.latitude,
+              longitude: data.longitude,
               category: sanitizeText(data.category),
               contactNumber: sanitizePhone(data.contactNumber),
+              available: data.available,
               imageUrls: data.imageUrls,
             }),
           });
@@ -95,8 +125,11 @@ export function DashboardProvider({ children }) {
               description: sanitizeText(data.description),
               price: Number(data.price),
               location: sanitizeText(data.location),
+              latitude: data.latitude,
+              longitude: data.longitude,
               category: sanitizeText(data.category),
               contactNumber: sanitizePhone(data.contactNumber),
+              available: data.available,
               imageUrls: data.imageUrls,
             }),
           });
@@ -119,7 +152,7 @@ export function DashboardProvider({ children }) {
             },
           });
           if (res.ok) {
-            setAds((prev) => prev.filter((item) => item.id === id ? false : true));
+            setAds((prev) => prev.filter((item) => String(item.id) !== String(id)));
             return true;
           }
         } catch (error) {
@@ -127,8 +160,38 @@ export function DashboardProvider({ children }) {
         }
         return false;
       },
-      updateProfile: (data) => {
-        // Implement profile update if needed
+      updateProfile: async (data) => {
+        if (!session?.accessToken) return false;
+        
+        const names = data.name.split(" ");
+        const firstName = names[0] || "";
+        const lastName = names.slice(1).join(" ") || "";
+
+        try {
+          const res = await fetch(`${API_BASE_URL}/Profile`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+            body: JSON.stringify({
+              firstName: firstName,
+              lastName: lastName,
+              email: data.email,
+              phone: data.phone,
+              location: data.location,
+              bio: data.bio,
+              profilePic: data.profilePic,
+            }),
+          });
+          if (res.ok) {
+            await fetchProfile();
+            return true;
+          }
+        } catch (error) {
+          console.error("Error updating profile:", error);
+        }
+        return false;
       },
       getAdById: (id) => ads.find((ad) => String(ad.id) === String(id)),
       refreshAds: fetchMyAds,

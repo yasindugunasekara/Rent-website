@@ -19,7 +19,7 @@ export default function DashboardNavbar() {
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/login" });
+    signOut({ callbackUrl: `${window.location.origin}/login` });
   };
 
   // Close mobile menu when route changes
