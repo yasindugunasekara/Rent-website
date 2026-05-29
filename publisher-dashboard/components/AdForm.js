@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-// Added modern icons for the UI
-import { ImagePlus, AlertCircle } from "lucide-react";
+import { ImagePlus, AlertCircle, X, PlusCircle } from "lucide-react";
 import { categoryOptions, locationOptions } from "@/lib/data";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
 
@@ -13,20 +12,23 @@ const initialForm = {
   price: "",
   location: "",
   category: "",
-  image: "",
+  imageUrls: [""], // Changed from 'image' to 'imageUrls' array
   contactNumber: "",
   available: true,
 };
 
 export default function AdForm({
-  formId, // Receives the formId from the parent page
+  formId,
   initialValues,
   onSubmit,
   isSubmitting,
 }) {
-  const [form, setForm] = useState({ ...initialForm, ...initialValues });
+  const [form, setForm] = useState({ 
+    ...initialForm, 
+    ...initialValues,
+    imageUrls: initialValues?.images?.map(img => img.imageUrl) || [""]
+  });
   const [errors, setErrors] = useState({});
-  const [imagePreview, setImagePreview] = useState(initialValues?.image || "");
 
   const descriptionCount = useMemo(() => form.description.length, [form.description]);
 
@@ -34,18 +36,24 @@ export default function AdForm({
     const { name, value, type, checked } = event.target;
     const nextValue = type === "checkbox" ? checked : value;
     setForm((prev) => ({ ...prev, [name]: nextValue }));
-    // Clear error when user starts typing
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImageUrlChange = (index, value) => {
+    const nextUrls = [...form.imageUrls];
+    nextUrls[index] = value;
+    setForm((prev) => ({ ...prev, imageUrls: nextUrls }));
+    if (errors.imageUrls) setErrors((prev) => ({ ...prev, imageUrls: null }));
+  };
 
-    const objectUrl = URL.createObjectURL(file);
-    setImagePreview(objectUrl);
-    setForm((prev) => ({ ...prev, image: objectUrl }));
-    if (errors.image) setErrors((prev) => ({ ...prev, image: null }));
+  const addImageField = () => {
+    setForm((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ""] }));
+  };
+
+  const removeImageField = (index) => {
+    if (form.imageUrls.length <= 1) return;
+    const nextUrls = form.imageUrls.filter((_, i) => i !== index);
+    setForm((prev) => ({ ...prev, imageUrls: nextUrls }));
   };
 
   const validate = () => {
@@ -57,7 +65,9 @@ export default function AdForm({
     if (!sanitizeText(form.category)) nextErrors.category = "Category is required.";
     if (!sanitizePhone(form.contactNumber))
       nextErrors.contactNumber = "Valid contact number is required.";
-    if (!form.image) nextErrors.image = "Please upload an image.";
+    
+    const validUrls = form.imageUrls.filter(url => url.trim() !== "");
+    if (validUrls.length === 0) nextErrors.imageUrls = "At least one image URL is required.";
     
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -66,10 +76,15 @@ export default function AdForm({
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validate()) return;
-    await onSubmit(form);
+    
+    // Clean up empty URLs before submitting
+    const cleanedForm = {
+      ...form,
+      imageUrls: form.imageUrls.filter(url => url.trim() !== "")
+    };
+    await onSubmit(cleanedForm);
   };
 
-  // Helper component for error messages
   const ErrorMsg = ({ msg }) => {
     if (!msg) return null;
     return (
@@ -81,7 +96,6 @@ export default function AdForm({
   };
 
   return (
-    // IMPORTANT: formId is assigned here so the external sticky button can trigger this form
     <form id={formId} onSubmit={handleSubmit} className="space-y-8">
       
       {/* --- BASIC INFORMATION --- */}
@@ -114,7 +128,7 @@ export default function AdForm({
             name="description"
             disabled={isSubmitting}
             rows={4}
-            placeholder="Describe the item, its condition, and any rules for renting..."
+            placeholder="Describe the item..."
             value={form.description}
             onChange={handleChange}
             className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 
@@ -140,7 +154,6 @@ export default function AdForm({
             <input
               id="price"
               type="number"
-              min="1"
               name="price"
               disabled={isSubmitting}
               placeholder="0.00"
@@ -216,53 +229,66 @@ export default function AdForm({
         </div>
       </section>
 
-      {/* --- IMAGE UPLOAD (Modern Style) --- */}
-      <section className="space-y-3">
-        <label className="text-sm font-bold text-textMain flex justify-between items-center">
-          <span>Upload Image <span className="text-red-500">*</span></span>
-        </label>
-        
-        <label 
-          htmlFor="image" 
-          className={`relative flex flex-col items-center justify-center w-full h-56 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer overflow-hidden
-            ${errors.image ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-background hover:border-primary hover:bg-primary/5'}`}
-        >
-          {imagePreview ? (
-            <>
-              <Image src={imagePreview} alt="Preview" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                <span className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full font-medium">Change Image</span>
+      {/* --- MULTIPLE IMAGES --- */}
+      <section className="space-y-4">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+          <h3 className="text-lg font-bold text-textMain">Item Images</h3>
+          <button
+            type="button"
+            onClick={addImageField}
+            className="flex items-center gap-2 text-sm font-bold text-primary hover:text-primaryHover transition-colors"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Add Image URL
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {form.imageUrls.map((url, index) => (
+            <div key={index} className="flex gap-4 items-start">
+              <div className="flex-1 space-y-2">
+                <div className="relative">
+                  <input
+                    placeholder="https://example.com/image.jpg"
+                    value={url}
+                    onChange={(e) => handleImageUrlChange(index, e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-background px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                  />
+                  {form.imageUrls.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeImageField(index)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+                {url && (
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                    <img
+                      src={url}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        e.target.src = "https://placehold.co/600x400?text=Invalid+Image+URL";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-6 text-center">
-              <div className="bg-white p-4 rounded-full shadow-sm mb-3">
-                <ImagePlus className="w-8 h-8 text-primary" />
-              </div>
-              <p className="text-sm font-bold text-textMain mb-1">Click to upload image</p>
-              <p className="text-xs text-textMuted">PNG, JPG or WEBP (Max 5MB)</p>
             </div>
-          )}
-          <input
-            id="image"
-            type="file"
-            accept="image/*"
-            disabled={isSubmitting}
-            onChange={handleImageChange}
-            className="hidden" // Hiding the ugly default file input
-          />
-        </label>
-        <ErrorMsg msg={errors.image} />
+          ))}
+        </div>
+        <ErrorMsg msg={errors.imageUrls} />
       </section>
 
-      {/* --- AVAILABILITY TOGGLE (Modern Switch) --- */}
+      {/* --- AVAILABILITY TOGGLE --- */}
       <section className="flex items-center justify-between rounded-2xl bg-background border border-gray-100 px-6 py-5">
         <div>
           <p className="text-base font-bold text-textMain">Item Availability</p>
           <p className="text-sm text-textMuted">Allow users to see and rent this item immediately.</p>
         </div>
-        
-        {/* Custom Toggle Switch */}
         <label className="relative inline-flex items-center cursor-pointer">
           <input 
             type="checkbox" 
@@ -275,9 +301,6 @@ export default function AdForm({
           <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-success/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-success"></div>
         </label>
       </section>
-
-      {/* ⚠️ THE YELLOW BUTTON HAS BEEN COMPLETELY REMOVED FROM HERE ⚠️ */}
-      {/* The form submission is now handled exclusively by the Sticky Bottom Bar in CreateAdPage.jsx */}
       
     </form>
   );

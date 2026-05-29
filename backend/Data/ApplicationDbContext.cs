@@ -9,5 +9,6 @@ namespace backend.Data
         
         public DbSet<Ad> Ads { get; set; } 
         public DbSet<User> Users { get; set; } 
+        public DbSet<AdImage> AdImages { get; set; } 
     }
 }

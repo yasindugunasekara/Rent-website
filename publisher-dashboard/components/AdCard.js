@@ -2,27 +2,31 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function AdCard({ ad, onDeleteClick }) {
+  const displayImage = ad.images && ad.images.length > 0 
+    ? ad.images[0].imageUrl 
+    : "https://placehold.co/600x400?text=No+Image";
+
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-lg border border-zinc-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       
-      {/* IMAGE SECTION 
-        'aspect-square' makes it perfectly square.
-        Because the parent article has 'overflow-hidden' and no padding, 
-        this image sits perfectly flush against the top, left, and right edges. 
-      */}
+      {/* IMAGE SECTION */}
       <div className="relative w-full aspect-square bg-zinc-50">
         <Image
-          src={ad.image}
+          src={displayImage}
           alt={ad.title}
           fill
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          unoptimized={true} // Since we use external URLs
         />
+        {ad.images && ad.images.length > 1 && (
+          <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+            +{ad.images.length - 1} Photos
+          </div>
+        )}
       </div>
 
-      {/* DETAILS & BUTTONS SECTION 
-        Padding is applied here instead of the main wrapper. 
-      */}
+      {/* DETAILS & BUTTONS SECTION */}
       <div className="flex flex-col flex-grow p-5">
         <div className="space-y-1.5 mb-5">
           <h3 className="line-clamp-1 text-lg font-bold text-zinc-900">{ad.title}</h3>

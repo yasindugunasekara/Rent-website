@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 // react-icons වෙනුවට අපේ app එකේ අනිත් තැන්වල පාවිච්චි කරන lucide-react icons ගත්තා
-import { Menu, X, LayoutDashboard, PlusCircle, List, User } from "lucide-react";
+import { Menu, X, LayoutDashboard, PlusCircle, List, User, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -16,6 +17,10 @@ const links = [
 export default function DashboardNavbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -63,6 +68,17 @@ export default function DashboardNavbar() {
                 </Link>
               );
             })}
+            
+            {/* Divider */}
+            <div className="w-px h-6 bg-gray-200 mx-2"></div>
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
           </nav>
 
           {/* --- MOBILE MENU BUTTON --- */}
@@ -101,6 +117,14 @@ export default function DashboardNavbar() {
                 </Link>
               );
             })}
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-red-500 hover:bg-red-50 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign Out
+            </button>
           </nav>
         </div>
       </header>

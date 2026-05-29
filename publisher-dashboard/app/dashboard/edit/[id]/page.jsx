@@ -43,11 +43,11 @@ export default function EditAdPage() {
 
   const handleSubmit = async (data) => {
     setIsSubmitting(true);
-    // Simulating API call
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    updateAd(id, data);
+    const success = await updateAd(id, data);
     setIsSubmitting(false);
-    router.push("/dashboard/history");
+    if (success) {
+      router.push("/dashboard/history");
+    }
   };
 
   return (

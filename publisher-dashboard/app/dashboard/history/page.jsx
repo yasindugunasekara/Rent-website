@@ -8,7 +8,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { useDashboard } from "@/lib/DashboardContext";
 
 export default function HistoryPage() {
-  const { ads, deleteAd } = useDashboard();
+  const { ads, deleteAd, loading } = useDashboard();
   const [selectedAd, setSelectedAd] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -60,7 +60,12 @@ export default function HistoryPage() {
       </div>
 
       {/* --- CONTENT AREA --- */}
-      {ads.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+          <p className="text-textMuted font-medium">Loading your listings...</p>
+        </div>
+      ) : ads.length === 0 ? (
         /* 🚀 MODERN EMPTY STATE */
         <div className="flex flex-col items-center justify-center rounded-[2.5rem] bg-surface border border-gray-100 p-12 sm:p-24 text-center shadow-sm">
           <div className="relative mb-8">
