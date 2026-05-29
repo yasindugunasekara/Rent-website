@@ -15,13 +15,27 @@ export const locationOptions = [
   "Seattle",
 ];
 
-export const mockUser = {
-  id: "publisher-1",
-  name: "Ava Publisher",
-  email: "ava.publisher@example.com",
-  phone: "+1 555 100 2000",
-  location: "New York",
-};
+export const mockUsers = [
+  {
+    id: "admin-1",
+    name: "Admin User",
+    email: "admin@example.com",
+    password: "password123",
+    role: "admin",
+    location: "Global",
+  },
+  {
+    id: "publisher-1",
+    name: "Ava Publisher",
+    email: "ava.publisher@example.com",
+    password: "password123",
+    role: "publisher",
+    phone: "+1 555 100 2000",
+    location: "New York",
+  },
+];
+
+export const mockUser = mockUsers[1];
 
 export const mockAds = [
   {
