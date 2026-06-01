@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { ImagePlus, AlertCircle, X, PlusCircle, MapPin } from "lucide-react";
+import { ImagePlus, AlertCircle, X, PlusCircle, MapPin, Loader2 } from "lucide-react";
 import { categoryOptions, locationOptions } from "@/lib/data";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
 
@@ -39,6 +39,8 @@ export default function AdForm({
   initialValues,
   onSubmit,
   isSubmitting,
+  submitLabel = "Submit",
+  submitIcon: SubmitIcon,
 }) {
   const [form, setForm] = useState({ 
     ...initialForm, 
@@ -317,6 +319,27 @@ export default function AdForm({
           <div className="w-14 h-7 bg-gray-200 dark:bg-zinc-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-success/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-success"></div>
         </label>
       </section>
+
+      {/* --- SUBMIT BUTTON --- */}
+      <div className="pt-6 border-t border-gray-100 dark:border-zinc-800">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primaryHover disabled:bg-primary/60 text-white text-lg font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98]"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-6 h-6 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              {SubmitIcon && <SubmitIcon className="w-6 h-6" />}
+              {submitLabel}
+            </>
+          )}
+        </button>
+      </div>
       
     </form>
   );

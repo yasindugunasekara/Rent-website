@@ -1,54 +1,158 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Loader2, AlertCircle, ShoppingBag } from "lucide-react";
+import { MapPin, Loader2, AlertCircle, ShoppingBag, Heart } from "lucide-react";
+import { useBookmarks } from "../lib/BookmarkContext";
+
+const SkeletonCard = () => (
+  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="aspect-[4/3] bg-gray-200 animate-pulse"></div>
+    <div className="p-5 space-y-4">
+      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+      <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse"></div>
+      <div className="flex justify-between pt-2">
+        <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  </div>
+);
 
 const UserHomeFeed = ({ search = "" }) => {
   const [ads, setAds] = useState([]);
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [error, setError] = useState(null);
-
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const { toggleBookmark, isBookmarked } = useBookmarks();
+  const observer = useRef();
   const API_BASE_URL = "http://localhost:5079/api";
+
+  // Intersection Observer for Infinite Scrolling
+  const lastAdElementRef = useCallback(node => {
+    if (loading || isFetchingMore) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, isFetchingMore, hasMore]);
+
+  // Fetch Logic
+  const fetchAds = async (coords, searchTerm, pageNumber, isInitial = false) => {
+    try {
+      const adsRes = await fetch(
+        `${API_BASE_URL}/Ads?lat=${coords.lat}&lng=${coords.lng}&search=${encodeURIComponent(searchTerm)}&page=${pageNumber}&limit=20`,
+        { next: { revalidate: 60 } }
+      );
+      
+      if (!adsRes.ok) throw new Error("Failed to fetch ads from server");
+      
+      const adsData = await adsRes.json();
+      
+      if (isInitial) {
+        setAds(adsData);
+      } else {
+        setAds(prev => [...prev, ...adsData]);
+      }
+      
+      setHasMore(adsData.length === 20);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      if (isInitial) setError("Could not load nearby rentals. Please try again later.");
+    } finally {
+      if (isInitial) setLoading(false);
+      else setIsFetchingMore(false);
+    }
+  };
 
   useEffect(() => {
     const initFeed = async () => {
       try {
         setLoading(true);
+        setPage(1);
+        setHasMore(true);
         
-        // 1. IP Geolocation (Frictionless)
-        const geoRes = await fetch("https://ipapi.co/json/");
-        const geoData = await geoRes.json();
-        
-        const coords = {
-          lat: geoData.latitude,
-          lng: geoData.longitude,
-          city: geoData.city
-        };
-        setLocation(coords);
+        let coords = location;
 
-        // 2. Fetch Ads from Backend
-        const adsRes = await fetch(
-          `${API_BASE_URL}/Ads?lat=${coords.lat}&lng=${coords.lng}&search=${encodeURIComponent(search)}`
-        );
-        
-        if (!adsRes.ok) throw new Error("Failed to fetch ads from server");
-        
-        const adsData = await adsRes.json();
-        setAds(adsData);
+        if (!coords) {
+          // 1. Try Browser Geolocation
+          const getBrowserLocation = () => {
+            return new Promise((resolve) => {
+              if (!navigator.geolocation) {
+                resolve(null);
+                return;
+              }
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  resolve({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: "high"
+                  });
+                },
+                () => resolve(null),
+                { timeout: 5000, enableHighAccuracy: true }
+              );
+            });
+          };
+
+          const browserCoords = await getBrowserLocation();
+
+          if (browserCoords) {
+            coords = browserCoords;
+            try {
+              const reverseGeoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.lat}&longitude=${coords.lng}&localityLanguage=en`);
+              const reverseGeoData = await reverseGeoRes.json();
+              coords.city = reverseGeoData.city || reverseGeoData.locality || "your exact location";
+            } catch (e) {
+              coords.city = "your exact location";
+            }
+          } else {
+            // 2. IP Fallback
+            try {
+              const geoRes = await fetch("https://ipapi.co/json/");
+              const geoData = await geoRes.json();
+              coords = {
+                lat: geoData.latitude,
+                lng: geoData.longitude,
+                city: geoData.city
+              };
+            } catch (ipErr) {
+              coords = { lat: 0, lng: 0, city: "Worldwide" };
+            }
+          }
+          setLocation(coords);
+        }
+
+        // Fetch first page
+        await fetchAds(coords, search, 1, true);
         
       } catch (err) {
-        console.error("Feed error:", err);
-        setError("Could not load nearby rentals. Please try again later.");
-      } finally {
+        setError("Something went wrong. Please refresh.");
         setLoading(false);
       }
     };
 
     initFeed();
   }, [search]);
+
+  // Fetch more when page changes
+  useEffect(() => {
+    if (page > 1 && location) {
+      setIsFetchingMore(true);
+      fetchAds(location, search, page, false);
+    }
+  }, [page]);
 
   if (loading) {
     return (
@@ -57,19 +161,7 @@ const UserHomeFeed = ({ search = "" }) => {
           <div className="h-8 w-48 bg-gray-200 rounded-lg"></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="aspect-[4/3] bg-gray-200 animate-pulse"></div>
-              <div className="p-5 space-y-4">
-                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse"></div>
-                <div className="flex justify-between pt-2">
-                  <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
-                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-          ))}
+          {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       </div>
     );
@@ -124,16 +216,34 @@ const UserHomeFeed = ({ search = "" }) => {
           {ads.map((ad, index) => (
             <div 
               key={ad.id}
+              ref={index === ads.length - 1 ? lastAdElementRef : null}
               className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-2"
-              style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Image Section */}
               <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                <img
+                <Image
                   src={ad.images && ad.images.length > 0 ? ad.images[0].imageUrl : "https://placehold.co/600x400?text=No+Image"}
                   alt={ad.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  unoptimized={true}
                 />
+
+                {/* Bookmark Button */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleBookmark(ad.id);
+                  }}
+                  className={`absolute top-4 left-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm z-10
+                    ${isBookmarked(ad.id) 
+                      ? "bg-red-500 text-white" 
+                      : "bg-white/80 text-gray-400 hover:text-red-500"}`}
+                >
+                  <Heart className={`w-4 h-4 ${isBookmarked(ad.id) ? "fill-current" : ""}`} />
+                </button>
+
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
                   <p className="text-blue-600 font-black text-sm">${ad.price}<span className="text-[10px] text-gray-500 font-medium">/day</span></p>
                 </div>
@@ -170,6 +280,7 @@ const UserHomeFeed = ({ search = "" }) => {
               </div>
             </div>
           ))}
+          {isFetchingMore && [...Array(4)].map((_, i) => <SkeletonCard key={`more-${i}`} />)}
         </div>
       )}
     </div>

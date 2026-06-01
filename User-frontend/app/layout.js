@@ -1,6 +1,8 @@
 import './globals.css';
 // Import the optimized Inter font from Next.js
 import { Inter } from 'next/font/google';
+import { BookmarkProvider } from '../lib/BookmarkContext';
+import FloatingBookmark from '../components/FloatingBookmark';
 
 // Configure the font (loads instantly, prevents layout shifts)
 const inter = Inter({ 
@@ -30,11 +32,16 @@ export default function RootLayout({ children }) {
         min-h-screen ensures the page always takes full height.
       */}
       <body className={`${inter.className} min-h-screen flex flex-col`}>
-        {/* Main content area flex-grow ensures it pushes a future footer to the bottom 
-        */}
-        <main className="flex-grow">
-          {children}
-        </main>
+        <BookmarkProvider>
+          <div className="relative flex flex-col min-h-screen">
+            <FloatingBookmark />
+            {/* Main content area flex-grow ensures it pushes a future footer to the bottom 
+            */}
+            <main className="flex-grow">
+              {children}
+            </main>
+          </div>
+        </BookmarkProvider>
       </body>
     </html>
   );

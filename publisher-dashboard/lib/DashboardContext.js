@@ -160,6 +160,42 @@ export function DashboardProvider({ children }) {
         }
         return false;
       },
+      toggleAdStatus: async (ad) => {
+        if (!session?.accessToken) return false;
+        const newStatus = !ad.available;
+        try {
+          const res = await fetch(`${API_BASE_URL}/Ads/${ad.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+            body: JSON.stringify({
+              title: ad.title,
+              description: ad.description,
+              price: ad.price,
+              location: ad.location,
+              latitude: ad.latitude,
+              longitude: ad.longitude,
+              category: ad.category,
+              contactNumber: ad.contactNumber,
+              available: newStatus,
+              imageUrls: ad.images.map(img => img.imageUrl),
+            }),
+          });
+          if (res.ok) {
+            setAds((prev) => 
+              prev.map((item) => 
+                String(item.id) === String(ad.id) ? { ...item, available: newStatus } : item
+              )
+            );
+            return true;
+          }
+        } catch (error) {
+          console.error("Error toggling ad status:", error);
+        }
+        return false;
+      },
       updateProfile: async (data) => {
         if (!session?.accessToken) return false;
         

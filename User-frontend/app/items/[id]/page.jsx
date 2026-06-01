@@ -16,8 +16,10 @@ import {
   BadgeCheck,
   User,
   Mail,
-  Info
+  Info,
+  Heart
 } from "lucide-react";
+import { useBookmarks } from "../../../lib/BookmarkContext";
 
 export default function ItemDetailsPage() {
   const { id } = useParams();
@@ -25,6 +27,7 @@ export default function ItemDetailsPage() {
   const [ad, setAd] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { toggleBookmark, isBookmarked } = useBookmarks();
 
   const API_BASE_URL = "http://localhost:5079/api";
 
@@ -90,23 +93,8 @@ export default function ItemDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFDFF] pb-20 animate-fadeIn">
+    <div className="min-h-screen bg-[#FDFDFF] pb-20 animate-fadeIn pt-12">
       
-      {/* 🔝 NAV BAR (Minimal) */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-4 mb-8">
-        <div className="max-w-7xl mx-auto flex items-center">
-          <button
-            onClick={() => router.back()}
-            className="group flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors"
-          >
-            <div className="p-2 rounded-full group-hover:bg-gray-100 transition-all">
-              <ArrowLeft className="w-5 h-5" />
-            </div>
-            Back
-          </button>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-2">
           
@@ -115,10 +103,13 @@ export default function ItemDetailsPage() {
             <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-gray-50 border border-gray-100 shadow-xl group">
               {ad.images && ad.images.length > 0 ? (
                 <>
-                  <img
+                  <Image
                     src={ad.images[currentImageIndex].imageUrl}
                     alt={ad.title}
-                    className="w-full h-full object-cover transition-transform duration-700"
+                    fill
+                    className="object-cover transition-transform duration-700"
+                    unoptimized={true}
+                    priority
                   />
                   
                   {ad.images.length > 1 && (
@@ -158,7 +149,7 @@ export default function ItemDetailsPage() {
                     onClick={() => setCurrentImageIndex(idx)}
                     className={`relative w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 border-4 transition-all ${idx === currentImageIndex ? 'border-blue-500 scale-95 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
                   >
-                    <img src={img.imageUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                    <Image src={img.imageUrl} alt="Thumbnail" fill className="object-cover" unoptimized={true} />
                   </button>
                 ))}
               </div>
@@ -179,9 +170,20 @@ export default function ItemDetailsPage() {
               )}
             </div>
 
-            <h1 className="text-4xl sm:text-5xl font-black text-gray-900 leading-[1.1] mb-6 tracking-tight">
-              {ad.title}
-            </h1>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 leading-[1.1] tracking-tight">
+                {ad.title}
+              </h1>
+              <button
+                onClick={() => toggleBookmark(ad.id)}
+                className={`p-4 rounded-2xl transition-all duration-300 shadow-sm border
+                  ${isBookmarked(ad.id) 
+                    ? "bg-red-500 text-white border-red-500 shadow-red-200" 
+                    : "bg-white text-gray-400 border-gray-100 hover:text-red-500 hover:border-red-100"}`}
+              >
+                <Heart className={`w-6 h-6 ${isBookmarked(ad.id) ? "fill-current" : ""}`} />
+              </button>
+            </div>
 
             <div className="flex items-baseline gap-2 mb-10 pb-10 border-b border-gray-100">
               <span className="text-5xl font-black text-blue-600">${ad.price}</span>
@@ -189,15 +191,20 @@ export default function ItemDetailsPage() {
             </div>
 
             <div className="grid gap-6 mb-12">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-gray-50 rounded-2xl">
-                  <MapPin className="w-6 h-6 text-gray-400" />
+              <a 
+                href={`https://www.google.com/maps/dir/?api=1&destination=${ad.latitude},${ad.longitude}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-start gap-4 group cursor-pointer"
+              >
+                <div className="p-3 bg-gray-50 rounded-2xl group-hover:bg-blue-50 transition-colors">
+                  <MapPin className="w-6 h-6 text-gray-400 group-hover:text-blue-500 transition-colors" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pick up Location</p>
-                  <p className="text-lg font-bold text-gray-800 leading-tight">{ad.location}</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-blue-500 transition-colors">Pick up Location (Get Directions)</p>
+                  <p className="text-lg font-bold text-gray-800 leading-tight group-hover:text-blue-600 transition-colors">{ad.location}</p>
                 </div>
-              </div>
+              </a>
 
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-gray-50 rounded-2xl">
@@ -233,7 +240,7 @@ export default function ItemDetailsPage() {
                 <div className="flex items-center gap-5 mb-8">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-md bg-white">
                     {ad.publisher.profilePic ? (
-                      <img src={ad.publisher.profilePic} alt="Publisher" className="w-full h-full object-cover" />
+                      <Image src={ad.publisher.profilePic} alt="Publisher" fill className="object-cover" unoptimized={true} />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 font-black text-xl uppercase">
                         {ad.publisher.firstName[0]}{ad.publisher.lastName[0]}

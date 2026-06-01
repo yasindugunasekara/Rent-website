@@ -21,7 +21,7 @@ namespace backend.Controllers
 
         // GET: api/Ads
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdResponseDto>>> GetAds([FromQuery] double? lat = null, [FromQuery] double? lng = null, [FromQuery] string? search = null)
+        public async Task<ActionResult<IEnumerable<AdResponseDto>>> GetAds([FromQuery] double? lat = null, [FromQuery] double? lng = null, [FromQuery] string? search = null, [FromQuery] int page = 1, [FromQuery] int limit = 20)
         {
             var query = _context.Ads
                 .Include(a => a.Images)
@@ -41,7 +41,7 @@ namespace backend.Controllers
 
             var ads = await query.ToListAsync();
 
-            var response = ads.Select(a => new AdResponseDto
+            var responseList = ads.Select(a => new AdResponseDto
             {
                 Id = a.Id,
                 Title = a.Title,
@@ -62,12 +62,53 @@ namespace backend.Controllers
 
             if (lat.HasValue && lng.HasValue)
             {
-                response = response.OrderBy(a => a.Distance);
+                responseList = responseList.OrderBy(a => a.Distance);
             }
             else
             {
-                response = response.OrderByDescending(a => a.CreatedAt);
+                responseList = responseList.OrderByDescending(a => a.CreatedAt);
             }
+
+            var paginatedResponse = responseList
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToList();
+
+            return Ok(paginatedResponse);
+        }
+
+        // GET: api/Ads/batch?ids=1,2,3
+        [HttpGet("batch")]
+        public async Task<ActionResult<IEnumerable<AdResponseDto>>> GetAdsByIds([FromQuery] string ids)
+        {
+            if (string.IsNullOrEmpty(ids)) return Ok(new List<AdResponseDto>());
+            
+            var idList = ids.Split(',')
+                            .Select(s => int.TryParse(s, out var id) ? id : (int?)null)
+                            .Where(id => id.HasValue)
+                            .Select(id => id.Value)
+                            .ToList();
+
+            var ads = await _context.Ads
+                .Include(a => a.Images)
+                .Where(a => idList.Contains(a.Id) && a.Available) // Only active
+                .ToListAsync();
+
+            var response = ads.Select(a => new AdResponseDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                Price = a.Price,
+                Location = a.Location,
+                Latitude = a.Latitude,
+                Longitude = a.Longitude,
+                Category = a.Category,
+                ContactNumber = a.ContactNumber,
+                Available = a.Available,
+                CreatedAt = a.CreatedAt,
+                Images = a.Images.Select(i => new AdImageResponseDto { Id = i.Id, ImageUrl = i.ImageUrl }).ToList()
+            });
 
             return Ok(response);
         }

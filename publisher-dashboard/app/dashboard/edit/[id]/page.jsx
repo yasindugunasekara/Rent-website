@@ -51,8 +51,7 @@ export default function EditAdPage() {
   };
 
   return (
-    // pb-32 for sticky button clearance
-    <div className="max-w-4xl mx-auto animate-fadeIn w-full pb-32 relative">
+    <div className="max-w-4xl mx-auto animate-fadeIn w-full relative">
       
       {/* 🔙 Navigation */}
       <button
@@ -82,44 +81,15 @@ export default function EditAdPage() {
 
         <div className="mt-4">
           <AdForm
-            formId="edit-ad-form" // Link to the sticky button below
+            formId="edit-ad-form"
             initialValues={ad}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
+            submitLabel="Update Listing"
+            submitIcon={Save}
           />
         </div>
       </section>
-
-      {/* 🔥 STICKY BOTTOM ACTION BAR (FOR UPDATING) 🔥 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-200 p-4 sm:p-6 z-50 shadow-[0_-15px_30px_-10px_rgba(0,0,0,0.05)]">
-        <div className="max-w-4xl mx-auto flex items-center justify-between px-2 sm:px-0">
-          
-          <div className="hidden sm:block">
-            <p className="text-base font-bold text-textMain">Unsaved Changes</p>
-            <p className="text-sm font-medium text-textMuted">Carefully review your updates.</p>
-          </div>
-          
-          <button
-            form="edit-ad-form" // Triggers the AdForm
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primaryHover disabled:bg-primary/60 text-white text-lg font-bold px-12 py-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              <>
-                <Save className="w-6 h-6" />
-                Update Listing
-              </>
-            )}
-          </button>
-
-        </div>
-      </div>
 
     </div>
   );
