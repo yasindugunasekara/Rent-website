@@ -29,6 +29,12 @@ namespace backend.DTOs
         public string Password { get; set; } = string.Empty;
     }
 
+    public class GoogleLoginDto
+    {
+        [Required]
+        public string IdToken { get; set; } = string.Empty;
+    }
+
     public class AuthResponseDto
     {
         public string Token { get; set; } = string.Empty;

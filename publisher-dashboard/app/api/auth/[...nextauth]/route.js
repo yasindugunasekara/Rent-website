@@ -1,8 +1,13 @@
-import NextAuth from "next-auth";
+﻿import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -42,13 +47,39 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.name = user.name;
-        token.email = user.email;
-        token.accessToken = user.accessToken;
+    async jwt({ token, user, account }) {
+      if (account) {
+        if (account.provider === "google") {
+          try {
+            const res = await fetch("http://localhost:5079/api/auth/google-login", {
+              method: "POST",
+              body: JSON.stringify({
+                idToken: account.id_token,
+              }),
+              headers: { "Content-Type": "application/json" },
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              token.id = data.user.id;
+              token.role = data.user.role;
+              token.name = data.user.firstName + " " + data.user.lastName;
+              token.email = data.user.email;
+              token.accessToken = data.token;
+            } else {
+              const errorText = await res.text();
+              console.error("Backend Google login failed:", errorText);
+            }
+          } catch (error) {
+            console.error("Google backend auth error:", error);
+          }
+        } else if (user) {
+          token.id = user.id;
+          token.role = user.role;
+          token.name = user.name;
+          token.email = user.email;
+          token.accessToken = user.accessToken;
+        }
       }
       return token;
     },

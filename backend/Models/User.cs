@@ -19,8 +19,11 @@ namespace backend.Models
         [MaxLength(255)]
         public string Email { get; set; } = string.Empty;
 
+        public string? PasswordHash { get; set; }
+
         [Required]
-        public string PasswordHash { get; set; } = string.Empty;
+        [MaxLength(20)]
+        public string AuthMethod { get; set; } = "local"; // "local" or "google"
 
         [Required]
         [MaxLength(20)]
