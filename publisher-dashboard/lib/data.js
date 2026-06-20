@@ -5,6 +5,8 @@ export const categoryOptions = [
   "property",
   "furniture",
   "appliances",
+  "travel",
+  "sports",
 ];
 
 export const locationOptions = [

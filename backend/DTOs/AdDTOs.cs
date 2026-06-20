@@ -26,6 +26,8 @@ namespace backend.DTOs
         public bool Available { get; set; } = true;
 
         public List<string> ImageUrls { get; set; } = new();
+
+        public string? Currency { get; set; } = "USD";
     }
 
     public class AdResponseDto

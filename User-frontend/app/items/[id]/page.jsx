@@ -20,6 +20,7 @@ import {
   Heart
 } from "lucide-react";
 import { useBookmarks } from "../../../lib/BookmarkContext";
+import { useCurrency } from "../../../lib/CurrencyContext";
 
 export default function ItemDetailsPage() {
   const { id } = useParams();
@@ -28,6 +29,7 @@ export default function ItemDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toggleBookmark, isBookmarked } = useBookmarks();
+  const { formatPrice } = useCurrency();
 
   const API_BASE_URL = "http://localhost:5079/api";
 
@@ -186,7 +188,7 @@ export default function ItemDetailsPage() {
             </div>
 
             <div className="flex items-baseline gap-2 mb-10 pb-10 border-b border-gray-100">
-              <span className="text-5xl font-black text-blue-600">${ad.price}</span>
+              <span className="text-5xl font-black text-blue-600">{formatPrice(ad.price)}</span>
               <span className="text-gray-400 font-bold text-xl">/ day</span>
             </div>
 

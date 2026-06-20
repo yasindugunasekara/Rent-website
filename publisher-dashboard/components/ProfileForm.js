@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { User, Mail, Phone, MapPin, Lock, Camera, Save, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Lock, Camera, Save, CheckCircle2, AlertCircle, Loader2, Globe } from "lucide-react";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
 
 export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
@@ -12,6 +12,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
     phone: initialValues?.phone || "",
     location: initialValues?.location || "",
     bio: initialValues?.bio || "",
+    preferredCurrency: initialValues?.preferredCurrency || "USD",
   });
 
   const [passwords, setPasswords] = useState({
@@ -181,6 +182,30 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
                 />
               </div>
               <ErrorMsg msg={errors.location} />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-textMain" htmlFor="preferredCurrency">Preferred Currency</label>
+              <div className="relative">
+                <Globe className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
+                <select
+                  id="preferredCurrency"
+                  name="preferredCurrency"
+                  value={form.preferredCurrency}
+                  onChange={handleFormChange}
+                  disabled={isSubmitting}
+                  className="w-full rounded-xl border border-gray-200 bg-background pl-11 pr-4 py-3 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 cursor-pointer appearance-none"
+                >
+                  <option value="USD">USD - US Dollar</option>
+                  <option value="EUR">EUR - Euro</option>
+                  <option value="GBP">GBP - British Pound</option>
+                  <option value="LKR">LKR - Sri Lankan Rupee</option>
+                  <option value="JPY">JPY - Japanese Yen</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg className="w-4 h-4 text-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
             </div>
 
           </div>

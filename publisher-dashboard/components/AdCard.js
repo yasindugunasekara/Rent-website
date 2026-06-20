@@ -5,7 +5,7 @@ import { useDashboard } from "@/lib/DashboardContext";
 import { Power, Loader2 } from "lucide-react";
 
 export default function AdCard({ ad, onDeleteClick }) {
-  const { toggleAdStatus } = useDashboard();
+  const { toggleAdStatus, formatPrice } = useDashboard();
   const [isToggling, setIsToggling] = useState(false);
 
   const handleToggle = async (e) => {
@@ -73,7 +73,7 @@ export default function AdCard({ ad, onDeleteClick }) {
             <h3 className="line-clamp-1 text-lg font-bold text-zinc-900 hover:text-primary transition-colors cursor-pointer">{ad.title}</h3>
           </Link>
           <p className="text-sm font-medium text-zinc-500">{ad.location}</p>
-          <p className="text-base font-bold text-[#D4A353]">${ad.price}/day</p>
+          <p className="text-base font-bold text-primary">{formatPrice(ad.price)}/day</p>
         </div>
 
         {/* BUTTONS */}

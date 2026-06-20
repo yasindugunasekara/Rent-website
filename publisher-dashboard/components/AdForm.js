@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ImagePlus, AlertCircle, X, PlusCircle, MapPin, Loader2 } from "lucide-react";
 import { categoryOptions, locationOptions } from "@/lib/data";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
+import { useDashboard } from "@/lib/DashboardContext";
 
 // Dynamically import LocationPicker with SSR disabled
 const LocationPicker = dynamic(
@@ -42,12 +43,22 @@ export default function AdForm({
   submitLabel = "Submit",
   submitIcon: SubmitIcon,
 }) {
+  const { currency, exchangeRate } = useDashboard();
   const [form, setForm] = useState({ 
     ...initialForm, 
     ...initialValues,
     imageUrls: initialValues?.images?.map(img => img.imageUrl) || [""]
   });
   const [errors, setErrors] = useState({});
+
+  // Sync price with exchange rate when editing or when currency changes
+  useEffect(() => {
+    if (initialValues?.price) {
+      const convertedPrice = initialValues.price * exchangeRate;
+      const roundedPrice = Math.round(convertedPrice / 10) * 10;
+      setForm(prev => ({ ...prev, price: roundedPrice }));
+    }
+  }, [initialValues?.price, exchangeRate]);
 
   const descriptionCount = useMemo(() => form.description.length, [form.description]);
 
@@ -178,7 +189,7 @@ export default function AdForm({
             Price (per day) <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-textMuted font-bold">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-textMuted font-bold text-xs">{currency}</span>
             <input
               id="price"
               type="number"
@@ -187,7 +198,7 @@ export default function AdForm({
               placeholder="0.00"
               value={form.price}
               onChange={handleChange}
-              className={`w-full rounded-xl border bg-background pl-8 pr-4 py-3 outline-none transition-all duration-200 
+              className={`w-full rounded-xl border bg-background pl-14 pr-4 py-3 outline-none transition-all duration-200 
                 ${errors.price ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10'}`}
             />
           </div>

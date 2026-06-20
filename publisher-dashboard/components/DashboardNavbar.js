@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 // react-icons වෙනුවට අපේ app එකේ අනිත් තැන්වල පාවිච්චි කරන lucide-react icons ගත්තා
-import { Menu, X, LayoutDashboard, PlusCircle, List, User, LogOut } from "lucide-react";
+import { Menu, X, LayoutDashboard, PlusCircle, List, User, LogOut, Globe } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useDashboard } from "@/lib/DashboardContext";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -17,6 +18,7 @@ const links = [
 export default function DashboardNavbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { currency, setCurrency } = useDashboard();
 
   const handleLogout = () => {
     signOut({ callbackUrl: `${window.location.origin}/login` });
@@ -71,6 +73,22 @@ export default function DashboardNavbar() {
             
             {/* Divider */}
             <div className="w-px h-6 bg-gray-200 mx-2"></div>
+
+            {/* Currency Selector */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+              <Globe className="w-4 h-4 text-textMuted" />
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="bg-transparent text-sm font-bold text-textMain outline-none cursor-pointer"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="LKR">LKR</option>
+                <option value="JPY">JPY</option>
+              </select>
+            </div>
             
             <button
               onClick={handleLogout}
@@ -117,6 +135,23 @@ export default function DashboardNavbar() {
                 </Link>
               );
             })}
+
+            {/* Mobile Currency Selector */}
+            <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-textMuted border border-gray-100 bg-gray-50/50">
+              <Globe className="w-5 h-5" />
+              <span className="flex-1">Currency</span>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="bg-transparent font-bold text-textMain outline-none cursor-pointer"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="LKR">LKR</option>
+                <option value="JPY">JPY</option>
+              </select>
+            </div>
             
             <button
               onClick={handleLogout}

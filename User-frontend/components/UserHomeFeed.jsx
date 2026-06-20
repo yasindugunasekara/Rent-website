@@ -3,8 +3,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { MapPin, Loader2, AlertCircle, ShoppingBag, Heart } from "lucide-react";
 import { useBookmarks } from "../lib/BookmarkContext";
+import { useCurrency } from "../lib/CurrencyContext";
+import FilterBar from "./FilterBar";
 
 const SkeletonCard = () => (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -20,9 +23,21 @@ const SkeletonCard = () => (
   </div>
 );
 
-const UserHomeFeed = ({ search = "" }) => {
+const UserHomeFeed = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Extract filters from URL
+  const filters = {
+    search: searchParams.get('search') || '',
+    category: searchParams.get('category') || '',
+    location: searchParams.get('location') || '',
+    priceRange: searchParams.get('priceRange') || '',
+  };
+
   const [ads, setAds] = useState([]);
-  const [location, setLocation] = useState(null);
+  const [userCoords, setUserCoords] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [error, setError] = useState(null);
@@ -30,8 +45,24 @@ const UserHomeFeed = ({ search = "" }) => {
   const [hasMore, setHasMore] = useState(true);
   
   const { toggleBookmark, isBookmarked } = useBookmarks();
+  const { formatPrice, currency } = useCurrency();
   const observer = useRef();
   const API_BASE_URL = "http://localhost:5079/api";
+
+  const handleApplyFilters = (newFilters) => {
+    const params = new URLSearchParams(searchParams);
+    
+    Object.entries(newFilters).forEach(([name, value]) => {
+      if (value) {
+        params.set(name, value);
+      } else {
+        params.delete(name);
+      }
+    });
+
+    // Scroll to results when filters are applied
+    router.push(`${pathname}?${params.toString()}#items`, { scroll: false });
+  };
 
   // Intersection Observer for Infinite Scrolling
   const lastAdElementRef = useCallback(node => {
@@ -48,10 +79,34 @@ const UserHomeFeed = ({ search = "" }) => {
   }, [loading, isFetchingMore, hasMore]);
 
   // Fetch Logic
-  const fetchAds = async (coords, searchTerm, pageNumber, isInitial = false) => {
+  const fetchAds = async (coords, currentFilters, pageNumber, isInitial = false) => {
     try {
+      // Parse priceRange
+      let minPrice = '';
+      let maxPrice = '';
+      if (currentFilters.priceRange) {
+        if (currentFilters.priceRange.includes('-')) {
+          [minPrice, maxPrice] = currentFilters.priceRange.split('-');
+        } else if (currentFilters.priceRange.endsWith('+')) {
+          minPrice = currentFilters.priceRange.replace('+', '');
+        }
+      }
+
+      const queryParams = new URLSearchParams({
+        lat: coords.lat || 0,
+        lng: coords.lng || 0,
+        search: currentFilters.search,
+        category: currentFilters.category,
+        locationFilter: currentFilters.location,
+        minPrice,
+        maxPrice,
+        currency,
+        page: pageNumber,
+        limit: 20
+      });
+
       const adsRes = await fetch(
-        `${API_BASE_URL}/Ads?lat=${coords.lat}&lng=${coords.lng}&search=${encodeURIComponent(searchTerm)}&page=${pageNumber}&limit=20`,
+        `${API_BASE_URL}/Ads?${queryParams.toString()}`,
         { next: { revalidate: 60 } }
       );
       
@@ -75,6 +130,7 @@ const UserHomeFeed = ({ search = "" }) => {
     }
   };
 
+  // Initialize and handle Filter/Search changes
   useEffect(() => {
     const initFeed = async () => {
       try {
@@ -82,10 +138,10 @@ const UserHomeFeed = ({ search = "" }) => {
         setPage(1);
         setHasMore(true);
         
-        let coords = location;
+        let coords = userCoords;
 
         if (!coords) {
-          // 1. Try Browser Geolocation
+          // Try Browser Geolocation
           const getBrowserLocation = () => {
             return new Promise((resolve) => {
               if (!navigator.geolocation) {
@@ -118,7 +174,7 @@ const UserHomeFeed = ({ search = "" }) => {
               coords.city = "your exact location";
             }
           } else {
-            // 2. IP Fallback
+            // IP Fallback
             try {
               const geoRes = await fetch("https://ipapi.co/json/");
               const geoData = await geoRes.json();
@@ -131,11 +187,11 @@ const UserHomeFeed = ({ search = "" }) => {
               coords = { lat: 0, lng: 0, city: "Worldwide" };
             }
           }
-          setLocation(coords);
+          setUserCoords(coords);
         }
 
-        // Fetch first page
-        await fetchAds(coords, search, 1, true);
+        // Fetch first page with current filters
+        await fetchAds(coords, filters, 1, true);
         
       } catch (err) {
         setError("Something went wrong. Please refresh.");
@@ -144,22 +200,19 @@ const UserHomeFeed = ({ search = "" }) => {
     };
 
     initFeed();
-  }, [search]);
+  }, [searchParams, currency]); // Re-fetch on URL changes or currency change
 
   // Fetch more when page changes
   useEffect(() => {
-    if (page > 1 && location) {
+    if (page > 1 && userCoords) {
       setIsFetchingMore(true);
-      fetchAds(location, search, page, false);
+      fetchAds(userCoords, filters, page, false);
     }
   }, [page]);
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center gap-3 mb-10 animate-pulse">
-          <div className="h-8 w-48 bg-gray-200 rounded-lg"></div>
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -187,16 +240,20 @@ const UserHomeFeed = ({ search = "" }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fadeIn">
+      
+      {/* Filters Section */}
+      <FilterBar filters={filters} onApplyFilters={handleApplyFilters} />
+
       {/* Header Info */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
         <div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">
-            Nearby Rentals
+            {filters.search ? `Search results for "${filters.search}"` : "Explore Rentals"}
           </h2>
-          {location && (
+          {userCoords && (
             <p className="text-gray-500 mt-1 flex items-center gap-1.5 font-medium">
               <MapPin className="w-4 h-4 text-blue-600" />
-              Showing results for {location.city || "your location"}
+              Showing results for {userCoords.city || "your location"}
             </p>
           )}
         </div>
@@ -208,8 +265,8 @@ const UserHomeFeed = ({ search = "" }) => {
       {ads.length === 0 ? (
         <div className="text-center py-20 bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
           <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900">No rentals nearby yet</h3>
-          <p className="text-gray-500 mt-2">Be the first to post an ad in this area!</p>
+          <h3 className="text-xl font-bold text-gray-900">No rentals found</h3>
+          <p className="text-gray-500 mt-2">Try adjusting your filters or search terms.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -245,7 +302,7 @@ const UserHomeFeed = ({ search = "" }) => {
                 </button>
 
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
-                  <p className="text-blue-600 font-black text-sm">${ad.price}<span className="text-[10px] text-gray-500 font-medium">/day</span></p>
+                  <p className="text-blue-600 font-black text-sm">{formatPrice(ad.price)}<span className="text-[10px] text-gray-500 font-medium">/day</span></p>
                 </div>
                 
                 {/* Distance Badge */}

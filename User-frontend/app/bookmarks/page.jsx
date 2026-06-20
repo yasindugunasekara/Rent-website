@@ -4,10 +4,12 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useBookmarks } from "../../lib/BookmarkContext";
+import { useCurrency } from "../../lib/CurrencyContext";
 import { Heart, MapPin, Loader2, Bookmark, ShoppingBag, ArrowLeft, Trash2 } from "lucide-react";
 
 export default function BookmarksPage() {
   const { bookmarks, toggleBookmark, isBookmarked, isHydrated } = useBookmarks();
+  const { formatPrice } = useCurrency();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -116,7 +118,7 @@ export default function BookmarksPage() {
                 </button>
 
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
-                  <p className="text-blue-600 font-black text-sm">${ad.price}<span className="text-[10px] text-gray-500 font-medium">/day</span></p>
+                  <p className="text-blue-600 font-black text-sm">{formatPrice(ad.price)}<span className="text-[10px] text-gray-500 font-medium">/day</span></p>
                 </div>
               </div>
 

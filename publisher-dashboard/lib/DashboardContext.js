@@ -11,7 +11,30 @@ export function DashboardProvider({ children }) {
   const { data: session } = useSession();
   const [ads, setAds] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [currency, setCurrency] = useState("USD");
+  const [exchangeRate, setExchangeRate] = useState(1.0);
   const [loading, setLoading] = useState(true);
+
+  // Fetch exchange rate from USD to target currency
+  const fetchExchangeRate = async (targetCurrency) => {
+    if (targetCurrency === "USD") {
+      setExchangeRate(1.0);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/Ads/exchange-rate?to=${targetCurrency}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExchangeRate(data.rate);
+      }
+    } catch (error) {
+      console.error("Error fetching exchange rate:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchExchangeRate(currency);
+  }, [currency]);
 
   // Fetch my ads
   const fetchMyAds = async () => {
@@ -60,7 +83,12 @@ export function DashboardProvider({ children }) {
           location: data.location || "",
           bio: data.bio || "",
           profilePic: data.profilePic || "",
+          preferredCurrency: data.preferredCurrency || "USD",
         });
+        // Sync global currency with user's preferred currency
+        if (data.preferredCurrency) {
+          setCurrency(data.preferredCurrency);
+        }
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -79,6 +107,40 @@ export function DashboardProvider({ children }) {
       ads,
       profile,
       loading,
+      currency,
+      setCurrency: async (newCurrency) => {
+        setCurrency(newCurrency);
+        // Persist to profile in background if logged in
+        if (session?.accessToken && profile) {
+          try {
+            fetch(`${API_BASE_URL}/Profile`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.accessToken}`,
+              },
+              body: JSON.stringify({
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                email: profile.email,
+                phone: profile.phone,
+                location: profile.location,
+                bio: profile.bio,
+                profilePic: profile.profilePic,
+                preferredCurrency: newCurrency,
+              }),
+            });
+          } catch (error) {
+            console.error("Failed to persist currency preference:", error);
+          }
+        }
+      },
+      exchangeRate,
+      formatPrice: (usdPrice) => {
+        const converted = usdPrice * exchangeRate;
+        const rounded = Math.round(converted / 10) * 10;
+        return `${rounded.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${currency}`;
+      },
       createAd: async (data) => {
         if (!session?.accessToken) return null;
         try {
@@ -99,6 +161,7 @@ export function DashboardProvider({ children }) {
               contactNumber: sanitizePhone(data.contactNumber),
               available: data.available,
               imageUrls: data.imageUrls,
+              currency: currency,
             }),
           });
           if (res.ok) {
@@ -131,6 +194,7 @@ export function DashboardProvider({ children }) {
               contactNumber: sanitizePhone(data.contactNumber),
               available: data.available,
               imageUrls: data.imageUrls,
+              currency: currency,
             }),
           });
           if (res.ok) {
@@ -218,6 +282,7 @@ export function DashboardProvider({ children }) {
               location: data.location,
               bio: data.bio,
               profilePic: data.profilePic,
+              preferredCurrency: data.preferredCurrency,
             }),
           });
           if (res.ok) {
@@ -232,7 +297,7 @@ export function DashboardProvider({ children }) {
       getAdById: (id) => ads.find((ad) => String(ad.id) === String(id)),
       refreshAds: fetchMyAds,
     }),
-    [ads, profile, session, loading]
+    [ads, profile, session, loading, currency, exchangeRate]
   );
 
   return (

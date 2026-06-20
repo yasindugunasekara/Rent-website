@@ -52,6 +52,7 @@ namespace backend.DTOs
         public string? Location { get; set; }
         public string? Bio { get; set; }
         public string? ProfilePic { get; set; }
+        public string PreferredCurrency { get; set; } = "USD";
     }
 
     public class ProfileUpdateDto
@@ -70,5 +71,6 @@ namespace backend.DTOs
         public string? Location { get; set; }
         public string? Bio { get; set; }
         public string? ProfilePic { get; set; }
+        public string? PreferredCurrency { get; set; }
     }
 }

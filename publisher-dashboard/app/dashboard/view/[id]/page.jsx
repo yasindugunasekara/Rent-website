@@ -23,7 +23,7 @@ import { useSession } from "next-auth/react";
 export default function AdViewPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { getAdById } = useDashboard();
+  const { getAdById, formatPrice } = useDashboard();
   const { data: session } = useSession();
   const [ad, setAd] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -191,7 +191,7 @@ export default function AdViewPage() {
           </h1>
 
           <div className="flex items-baseline gap-1 mb-8">
-            <span className="text-4xl font-black text-primary">${ad.price}</span>
+            <span className="text-4xl font-black text-primary">{formatPrice(ad.price)}</span>
             <span className="text-textMuted font-medium">/ day</span>
           </div>
 

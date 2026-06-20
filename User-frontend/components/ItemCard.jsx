@@ -2,8 +2,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 // Added Star icon for a professional touch (ratings)
 import { MapPin, Star } from 'lucide-react';
+import { useCurrency } from '../lib/CurrencyContext';
 
 export default function ItemCard({ item }) {
+  const { formatPrice } = useCurrency();
+
   return (
     // 'group' class allows us to trigger inner animations when the whole card is hovered
     <Link href={`/items/${item.id}`} className="group block h-full">
@@ -57,7 +60,7 @@ export default function ItemCard({ item }) {
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <div>
               {/* Changed price to success (Trust Green) to make it pop */}
-              <span className="text-xl font-extrabold text-success">${item.price}</span>
+              <span className="text-xl font-extrabold text-success">{formatPrice(item.price)}</span>
               <span className="text-sm font-medium text-textMuted"> /day</span>
             </div>
 

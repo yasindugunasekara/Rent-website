@@ -34,6 +34,9 @@ namespace backend.Models
         public string? Bio { get; set; }
         public string? ProfilePic { get; set; }
 
+        [MaxLength(10)]
+        public string PreferredCurrency { get; set; } = "USD";
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -42,7 +42,8 @@ namespace backend.Controllers
                 Phone = user.Phone,
                 Location = user.Location,
                 Bio = user.Bio,
-                ProfilePic = user.ProfilePic
+                ProfilePic = user.ProfilePic,
+                PreferredCurrency = user.PreferredCurrency
             };
         }
 
@@ -74,6 +75,11 @@ namespace backend.Controllers
             user.Location = profileDto.Location;
             user.Bio = profileDto.Bio;
             user.ProfilePic = profileDto.ProfilePic;
+            
+            if (!string.IsNullOrEmpty(profileDto.PreferredCurrency))
+            {
+                user.PreferredCurrency = profileDto.PreferredCurrency;
+            }
 
             await _context.SaveChangesAsync();
 

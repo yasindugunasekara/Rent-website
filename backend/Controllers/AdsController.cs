@@ -13,15 +13,29 @@ namespace backend.Controllers
     public class AdsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public AdsController(ApplicationDbContext context)
+        public AdsController(ApplicationDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         // GET: api/Ads
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AdResponseDto>>> GetAds([FromQuery] double? lat = null, [FromQuery] double? lng = null, [FromQuery] string? search = null, [FromQuery] int page = 1, [FromQuery] int limit = 20)
+        public async Task<ActionResult<IEnumerable<AdResponseDto>>> GetAds(
+            [FromQuery] double? lat = null, 
+            [FromQuery] double? lng = null, 
+            [FromQuery] string? search = null, 
+            [FromQuery] string? category = null,
+            [FromQuery] string? locationFilter = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] string? currency = "USD",
+            [FromQuery] int page = 1, 
+            [FromQuery] int limit = 20)
         {
             var query = _context.Ads
                 .Include(a => a.Images)
@@ -37,6 +51,30 @@ namespace backend.Controllers
                     a.Category.ToLower().Contains(lowerSearch) || 
                     a.Location.ToLower().Contains(lowerSearch)
                 );
+            }
+
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                var lowerCat = category.ToLower();
+                query = query.Where(a => a.Category.ToLower() == lowerCat);
+            }
+
+            if (!string.IsNullOrWhiteSpace(locationFilter))
+            {
+                var lowerLoc = locationFilter.ToLower();
+                query = query.Where(a => a.Location.ToLower().Contains(lowerLoc));
+            }
+
+            if (minPrice.HasValue)
+            {
+                var minUsd = await ConvertToUsd(minPrice.Value, currency);
+                query = query.Where(a => a.Price >= minUsd);
+            }
+
+            if (maxPrice.HasValue)
+            {
+                var maxUsd = await ConvertToUsd(maxPrice.Value, currency);
+                query = query.Where(a => a.Price <= maxUsd);
             }
 
             var ads = await query.ToListAsync();
@@ -155,7 +193,6 @@ namespace backend.Controllers
             };
         }
 
-        // GET: api/Ads/my-ads
         [HttpGet("my-ads")]
         [Authorize]
         public async Task<ActionResult<IEnumerable<Ad>>> GetMyAds()
@@ -171,6 +208,70 @@ namespace backend.Controllers
                 .ToListAsync();
         }
 
+        // GET: api/Ads/exchange-rate?to=LKR
+        [HttpGet("exchange-rate")]
+        public async Task<ActionResult<object>> GetExchangeRate([FromQuery] string to)
+        {
+            if (string.IsNullOrEmpty(to) || to.ToUpper() == "USD")
+            {
+                return Ok(new { rate = 1.0m });
+            }
+
+            try
+            {
+                var apiKey = _configuration["ExchangeRateApi:ApiKey"];
+                var client = _httpClientFactory.CreateClient();
+                var response = await client.GetAsync($"https://v6.exchangerate-api.com/v6/{apiKey}/pair/USD/{to.ToUpper()}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
+                    if (result != null && result.TryGetPropertyValue("conversion_rate", out var rateNode) && rateNode != null)
+                    {
+                        return Ok(new { rate = rateNode.GetValue<decimal>() });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Rate fetch failed: {ex.Message}");
+            }
+
+            return BadRequest("Could not fetch exchange rate");
+        }
+
+        // GET: api/Ads/currencies
+        [HttpGet("currencies")]
+        public async Task<ActionResult<object>> GetCurrencies()
+        {
+            try
+            {
+                var apiKey = _configuration["ExchangeRateApi:ApiKey"];
+                var client = _httpClientFactory.CreateClient();
+                var response = await client.GetAsync($"https://v6.exchangerate-api.com/v6/{apiKey}/codes");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
+                    if (result != null && result.TryGetPropertyValue("supported_codes", out var codesNode) && codesNode != null)
+                    {
+                        var codes = codesNode.AsArray().Select(c => new
+                        {
+                            code = c[0].ToString(),
+                            name = c[1].ToString()
+                        });
+                        return Ok(codes);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Currencies fetch failed: {ex.Message}");
+            }
+
+            return BadRequest("Could not fetch currencies");
+        }
+
         // POST: api/Ads
         [HttpPost]
         [Authorize]
@@ -181,11 +282,13 @@ namespace backend.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
+            decimal finalPrice = await ConvertToUsd(adDto.Price, adDto.Currency);
+
             var ad = new Ad
             {
                 Title = adDto.Title,
                 Description = adDto.Description,
-                Price = adDto.Price,
+                Price = finalPrice,
                 Location = adDto.Location,
                 Latitude = adDto.Latitude,
                 Longitude = adDto.Longitude,
@@ -217,9 +320,11 @@ namespace backend.Controllers
             if (ad == null) return NotFound();
             if (ad.PublisherId != userId) return Forbid(); // Prevent editing other people's ads
 
+            decimal finalPrice = await ConvertToUsd(adDto.Price, adDto.Currency);
+
             ad.Title = adDto.Title;
             ad.Description = adDto.Description;
-            ad.Price = adDto.Price;
+            ad.Price = finalPrice;
             ad.Location = adDto.Location;
             ad.Latitude = adDto.Latitude;
             ad.Longitude = adDto.Longitude;
@@ -234,6 +339,37 @@ namespace backend.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private async Task<decimal> ConvertToUsd(decimal amount, string? currency)
+        {
+            if (string.IsNullOrEmpty(currency) || currency.ToUpper() == "USD")
+            {
+                return amount;
+            }
+
+            try
+            {
+                var apiKey = _configuration["ExchangeRateApi:ApiKey"];
+                var client = _httpClientFactory.CreateClient();
+                var response = await client.GetAsync($"https://v6.exchangerate-api.com/v6/{apiKey}/pair/{currency.ToUpper()}/USD/{amount}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<System.Text.Json.Nodes.JsonObject>();
+                    if (result != null && result.TryGetPropertyValue("conversion_result", out var resultNode) && resultNode != null)
+                    {
+                        return resultNode.GetValue<decimal>();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // In case of error, fall back to the original amount (though ideally we should log this)
+                Console.WriteLine($"Currency conversion failed: {ex.Message}");
+            }
+
+            return amount;
         }
 
         // DELETE: api/Ads/5

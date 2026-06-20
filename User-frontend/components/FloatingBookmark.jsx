@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { useBookmarks } from "../lib/BookmarkContext";
+import { usePathname } from "next/navigation";
 
 export default function FloatingBookmark() {
   const { bookmarks, isHydrated } = useBookmarks();
+  const pathname = usePathname();
+
+  if (pathname !== "/") return null;
 
   return (
     <Link 
