@@ -1,21 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { 
-  Bookmark, 
-  Menu,
-  X,
-  PlusCircle,
-  LogIn,
-  UserPlus
-} from "lucide-react";
-import { useState } from "react";
+import { Bookmark, Menu, X, PlusCircle, LogIn, UserPlus } from "lucide-react";
 import FloatingCurrency from "./FloatingCurrency";
 import { useBookmarks } from "../lib/BookmarkContext";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { bookmarks, isHydrated } = useBookmarks();
+  const pathname = usePathname();
+  const isBookmarksPage = pathname === "/bookmarks";
 
   return (
     <nav className="bg-[#003B95] text-white sticky top-0 z-[100] shadow-md">
@@ -60,13 +56,15 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Bookmark Icon (Desktop Only) */}
-            <div className="relative group/tooltip hidden md:block">
+            {/* Bookmark Icon */}
+            <div className="relative group/tooltip">
               <Link 
-                href="/bookmarks"
-                className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition-colors"
+                href={isBookmarksPage ? "/" : "/bookmarks"}
+                className={`relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition-colors ${
+                  isBookmarksPage ? "bg-white/10 text-white" : ""
+                }`}
               >
-                <Bookmark className="w-6 h-6" />
+                <Bookmark className={`w-6 h-6 ${isBookmarksPage ? "fill-current" : ""}`} />
                 {isHydrated && bookmarks.length > 0 && (
                   <span className="absolute top-1 right-1 bg-[#D4111E] text-white text-[10px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white">
                     {bookmarks.length}
@@ -75,7 +73,7 @@ export default function Navbar() {
               </Link>
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover/tooltip:block z-[110]">
                 <div className="bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-md shadow-xl whitespace-nowrap uppercase tracking-wider border border-white/10">
-                  My Bookmarks
+                  {isBookmarksPage ? "Close Bookmarks" : "My Bookmarks"}
                 </div>
                 <div className="w-2 h-2 bg-gray-900 rotate-45 absolute -top-1 left-1/2 -translate-x-1/2 border-l border-t border-white/10"></div>
               </div>
@@ -101,6 +99,7 @@ export default function Navbar() {
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
+
           </div>
         </div>
       </div>
@@ -109,23 +108,6 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-[#003B95] border-t border-white/10 shadow-xl animate-in slide-in-from-top duration-300 z-50">
           <div className="px-4 py-6 space-y-4">
-            {/* Bookmarks Section in Menu */}
-            <Link 
-              href="/bookmarks"
-              onClick={() => setIsMenuOpen(false)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/10 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Bookmark className="w-5 h-5 text-white" />
-                <span className="font-medium">My Bookmarks</span>
-              </div>
-              {isHydrated && bookmarks.length > 0 && (
-                <span className="bg-[#D4111E] text-white text-[10px] font-bold min-w-[20px] h-[20px] flex items-center justify-center rounded-full border border-white/20">
-                  {bookmarks.length}
-                </span>
-              )}
-            </Link>
-
             <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors text-left">
               <PlusCircle className="w-5 h-5" />
               <span className="font-medium">List your item</span>

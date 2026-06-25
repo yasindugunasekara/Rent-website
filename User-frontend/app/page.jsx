@@ -3,7 +3,6 @@
 import { useState, Suspense } from 'react';
 import Hero from '../components/Hero';
 import UserHomeFeed from '../components/UserHomeFeed';
-import Footer from '../components/Footer';
 
 export default function Home() {
   return (
@@ -27,8 +26,6 @@ export default function Home() {
           <UserHomeFeed />
         </Suspense>
       </main>
-
-      <Footer />
     </div>
   );
 }

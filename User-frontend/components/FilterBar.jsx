@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, MapPin, DollarSign, ChevronDown, Layers, X, RotateCcw, Filter } from 'lucide-react';
+import { Search, MapPin, ChevronDown, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCurrency } from '../lib/CurrencyContext';
 
@@ -11,7 +11,9 @@ export default function FilterBar({ filters, onApplyFilters }) {
   const [localCategory, setLocalCategory] = useState(filters.category || '');
   const [localPriceRange, setLocalPriceRange] = useState(filters.priceRange || '');
 
-  // Update local states when props change (e.g. from Hero or URL refresh)
+  const [showPriceDropdown, setShowPriceDropdown] = useState(false);
+
+  // Sync state when parent props change (e.g. from Hero)
   useEffect(() => {
     setLocalSearch(filters.search || '');
     setLocalLocation(filters.location || '');
@@ -25,6 +27,17 @@ export default function FilterBar({ filters, onApplyFilters }) {
       location: localLocation,
       category: localCategory,
       priceRange: localPriceRange
+    });
+  };
+
+  const handlePriceToggle = (priceVal) => {
+    const nextPrice = localPriceRange === priceVal ? '' : priceVal;
+    setLocalPriceRange(nextPrice);
+    onApplyFilters({
+      search: localSearch,
+      location: localLocation,
+      category: localCategory,
+      priceRange: nextPrice
     });
   };
 
@@ -47,144 +60,107 @@ export default function FilterBar({ filters, onApplyFilters }) {
     }
   };
 
-  const hasActiveFilters = filters.search || filters.category || filters.location || filters.priceRange;
+  const PRICE_OPTIONS = [
+    { label: `Under 50 ${currency}`, value: '0-50' },
+    { label: `50 - 100 ${currency}`, value: '50-100' },
+    { label: `100 - 250 ${currency}`, value: '100-250' },
+    { label: `250 - 500 ${currency}`, value: '250-500' },
+    { label: `500 - 1000 ${currency}`, value: '500-1000' },
+    { label: `1000+ ${currency}`, value: '1000+' }
+  ];
 
   return (
-    <div className="bg-white shadow-xl shadow-gray-100/50 border border-gray-100 rounded-3xl p-6 mb-12">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="bg-white border border-gray-100 rounded-[2rem] p-5 mb-12 shadow-sm">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 w-full">
         
-        {/* --- Search Filter --- */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="search-filter" className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">
-            Search
-          </label>
-          <div className="relative group">
+        {/* --- Search Group --- */}
+        <div className="flex items-center flex-grow lg:flex-[2] border border-gray-200 rounded-2xl overflow-hidden bg-white focus-within:ring-2 focus-within:ring-[#003B95]/15 focus-within:border-[#003B95] transition-all relative shrink-0">
+          <Search className="absolute left-4 text-gray-400 w-4 h-4 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search with title"
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full pl-11 pr-24 py-3.5 text-sm bg-transparent border-none focus:outline-none focus:ring-0 text-gray-900 placeholder:text-gray-400 font-semibold"
+          />
+          {localSearch && (
             <button 
-              onClick={handleApply}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors z-10"
-              title="Click to search"
+              onClick={() => setLocalSearch('')}
+              className="absolute right-[5.5rem] top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400"
             >
-              <Search className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
-            <input
-              id="search-filter"
-              type="text"
-              placeholder="What are you looking for?"
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full px-4 py-3.5 pl-11 pr-10 bg-gray-50 border-none text-gray-900 rounded-2xl focus:ring-2 focus:ring-blue-600/20 focus:bg-white transition-all duration-200 placeholder:text-gray-400 font-medium"
-            />
-            {localSearch && (
-              <button 
-                onClick={() => setLocalSearch('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-900 transition-all"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          )}
+          <button
+            onClick={handleApply}
+            className="absolute right-0 top-0 bottom-0 bg-[#003B95] hover:bg-[#002b6e] text-white text-sm font-bold px-5 transition-colors flex items-center justify-center"
+          >
+            Search
+          </button>
         </div>
 
-        {/* --- Category Filter --- */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="category-filter" className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">
-            Category
-          </label>
-          <div className="relative group">
-            <Layers className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-600 transition-colors" />
-            <select
-              id="category-filter"
-              value={localCategory}
-              onChange={(e) => setLocalCategory(e.target.value)}
-              className="w-full px-4 py-3.5 pl-11 pr-10 bg-gray-50 border-none text-gray-900 rounded-2xl focus:ring-2 focus:ring-blue-600/20 focus:bg-white transition-all duration-200 appearance-none cursor-pointer font-medium"
-            >
-              <option value="">All Categories</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Vehicles">Vehicles</option>
-              <option value="Home">Home & Garden</option>
-              <option value="Tools">Tools</option>
-              <option value="Events">Events & Party</option>
-              <option value="Sports">Sports & Outdoors</option>
-              <option value="Travel">Travel</option>
-              <option value="Books">Books & Media</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-          </div>
+        {/* --- Location Input --- */}
+        <div className="relative flex items-center flex-grow lg:flex-[1] border border-gray-200 rounded-2xl overflow-hidden bg-white focus-within:ring-2 focus-within:ring-[#003B95]/15 focus-within:border-[#003B95] transition-all shrink-0">
+          <MapPin className="absolute left-4 text-gray-400 w-4 h-4 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Location"
+            value={localLocation}
+            onChange={(e) => setLocalLocation(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full pl-11 pr-4 py-3.5 text-sm bg-transparent border-none focus:outline-none focus:ring-0 text-gray-900 placeholder:text-gray-400 font-semibold"
+          />
         </div>
 
-        {/* --- Location Filter --- */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="location-filter" className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">
-            Location
-          </label>
-          <div className="relative group">
-            <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-600 transition-colors" />
-            <input
-              id="location-filter"
-              type="text"
-              placeholder="Anywhere"
-              value={localLocation}
-              onChange={(e) => setLocalLocation(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full px-4 py-3.5 pl-11 pr-10 bg-gray-50 border-none text-gray-900 rounded-2xl focus:ring-2 focus:ring-blue-600/20 focus:bg-white transition-all duration-200 placeholder:text-gray-400 font-medium"
-            />
-            {localLocation && (
-              <button 
-                onClick={() => setLocalLocation('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-900 transition-all"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+        {/* --- Price Filter Dropdown --- */}
+        <div className="relative flex-grow lg:flex-[1] shrink-0">
+          <button 
+            onClick={() => {
+              setShowPriceDropdown(!showPriceDropdown);
+            }}
+            className={`w-full px-4 py-3 bg-white border rounded-2xl text-sm font-semibold text-gray-700 flex items-center justify-between transition-all focus:outline-none focus:border-[#003B95] focus:ring-2 focus:ring-[#003B95]/15
+              ${showPriceDropdown ? 'border-[#003B95] ring-2 ring-[#003B95]/15' : 'border-gray-200 hover:border-gray-300'}`}
+          >
+            <span className="truncate">
+              {localPriceRange 
+                ? PRICE_OPTIONS.find(o => o.value === localPriceRange)?.label 
+                : 'Filter by price'}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showPriceDropdown ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showPriceDropdown && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowPriceDropdown(false)} />
+              <div className="absolute left-0 mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl z-30 p-4 space-y-2 animate-fadeIn">
+                {PRICE_OPTIONS.map((opt) => {
+                  const isChecked = localPriceRange === opt.value;
+                  return (
+                    <label key={opt.value} className="flex items-center gap-3 text-sm font-semibold text-gray-600 hover:text-gray-900 cursor-pointer py-1.5 transition-colors">
+                      <input 
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handlePriceToggle(opt.value)}
+                        className="rounded text-[#003B95] focus:ring-[#003B95]/20 border-gray-300 w-4 h-4 cursor-pointer"
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* --- Price Range Filter --- */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="price-filter" className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">
-            Price Range ({currency})
-          </label>
-          <div className="relative group">
-            <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-600 transition-colors" />
-            <select
-              id="price-filter"
-              value={localPriceRange}
-              onChange={(e) => setLocalPriceRange(e.target.value)}
-              className="w-full px-4 py-3.5 pl-11 pr-10 bg-gray-50 border-none text-gray-900 rounded-2xl focus:ring-2 focus:ring-blue-600/20 focus:bg-white transition-all duration-200 appearance-none cursor-pointer font-medium"
-            >
-              <option value="">Any Price</option>
-              <option value="0-50">Under 50 {currency}</option>
-              <option value="50-100">50 - 100 {currency}</option>
-              <option value="100-250">100 - 250 {currency}</option>
-              <option value="250-500">250 - 500 {currency}</option>
-              <option value="500-1000">500 - 1000 {currency}</option>
-              <option value="1000+">1000+ {currency}</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-          </div>
-        </div>
-      </div>
-
-      {/* --- Action Buttons --- */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 border-t border-gray-50 pt-6">
+        {/* --- Clear Filters Button --- */}
         <button
-          onClick={handleApply}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-3.5 rounded-2xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:shadow-blue-600/40 transition-all active:scale-95"
+          onClick={handleClearAll}
+          className="w-full lg:w-auto px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer shadow-sm active:scale-95 text-center shrink-0 flex-none"
         >
-          <Filter className="w-4 h-4" />
-          Apply Filters
+          Clear filters
         </button>
 
-        {hasActiveFilters && (
-          <button
-            onClick={handleClearAll}
-            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-2xl text-sm font-bold text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all active:scale-95"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Clear All
-          </button>
-        )}
       </div>
     </div>
   );

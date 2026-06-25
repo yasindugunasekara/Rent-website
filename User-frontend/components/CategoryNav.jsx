@@ -717,6 +717,26 @@ export default function CategoryNav() {
     };
   }, []);
 
+  // Lock body scroll on mobile when drawer is expanded
+  useEffect(() => {
+    const handleScrollLock = () => {
+      if (isExpanded && window.innerWidth < 640) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    };
+
+    handleScrollLock();
+    
+    // Add resize listener to dynamically unlock if user resizes to desktop
+    window.addEventListener('resize', handleScrollLock);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('resize', handleScrollLock);
+    };
+  }, [isExpanded]);
+
   const handleScroll = (direction) => {
     const container = scrollContainerRef.current;
     if (container) {
@@ -823,7 +843,7 @@ export default function CategoryNav() {
 
       {/* Expanded Animated Categories Drawer Panel */}
       <div 
-        className={`overflow-hidden transition-all duration-500 ease-in-out border-gray-100 bg-white
+        className={`hidden sm:block overflow-hidden transition-all duration-500 ease-in-out border-gray-100 bg-white
           ${isExpanded 
             ? 'max-h-[1200px] opacity-100 mt-6 border-t shadow-2xl shadow-gray-200/50 rounded-b-[2rem]' 
             : 'max-h-0 opacity-0 pointer-events-none'}`}
@@ -875,11 +895,101 @@ export default function CategoryNav() {
               );
             })}
           </div>
-
-
-
         </div>
       </div>
+
+      {/* Mobile Popup Modal for All Categories */}
+      {isExpanded && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsExpanded(false)}
+          />
+          {/* Modal Content */}
+          <div className="relative bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl flex flex-col max-h-[80vh] z-10 overflow-hidden border border-gray-100 animate-fadeIn">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+              <h3 className="text-lg font-black text-gray-900">All Categories</h3>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Close categories"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto p-5 space-y-6 flex-grow no-scrollbar">
+              {/* Section: Core Categories */}
+              <div>
+                <h4 className="text-xs font-black text-gray-400 tracking-wider uppercase mb-3">Core Categories</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {CORE_CATEGORIES.map((cat) => {
+                    const isActive = activeCategory === cat.queryVal.toLowerCase();
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          handleSelectCategory(cat.queryVal);
+                          setIsExpanded(false);
+                        }}
+                        className={`flex items-center gap-2.5 p-3 rounded-2xl text-left border transition-all duration-200 group
+                          ${isActive
+                            ? 'border-[#003B95] bg-[#003B95]/5 shadow-sm'
+                            : 'border-gray-100 bg-gray-50/50 hover:bg-white'}`}
+                      >
+                        {/* SVG Icon */}
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 bg-white shadow-sm group-hover:scale-105
+                          ${isActive ? 'ring-2 ring-[#003B95]/20' : 'border border-gray-100'}`}>
+                          <div className="scale-75 flex items-center justify-center">
+                            {cat.icon}
+                          </div>
+                        </div>
+                        <span className={`text-xs font-bold truncate ${isActive ? 'text-[#003B95]' : 'text-gray-700'}`}>
+                          {cat.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Section: More Categories */}
+              <div>
+                <h4 className="text-xs font-black text-gray-400 tracking-wider uppercase mb-3">More Categories</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {PANEL_CATEGORIES.map((cat, index) => {
+                    const isActive = activeCategory === cat.queryVal.toLowerCase();
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          handleSelectCategory(cat.queryVal);
+                          setIsExpanded(false);
+                        }}
+                        className={`flex items-center gap-2.5 p-3 rounded-2xl text-left border transition-all duration-200 group
+                          ${isActive
+                            ? 'border-[#003B95] bg-[#003B95]/5 shadow-sm'
+                            : 'border-gray-100 bg-gray-50/50 hover:bg-white'}`}
+                      >
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 bg-white shadow-sm group-hover:scale-105
+                          ${isActive ? 'ring-2 ring-[#003B95]/20' : 'border border-gray-100'}`}>
+                          <DrawerIcon type={cat.iconName} />
+                        </div>
+                        <span className={`text-xs font-bold truncate ${isActive ? 'text-[#003B95]' : 'text-gray-800'}`}>
+                          {cat.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
     </div>
   );

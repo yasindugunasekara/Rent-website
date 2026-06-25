@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { BookmarkProvider } from '../lib/BookmarkContext';
 import { CurrencyProvider } from '../lib/CurrencyContext';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 // Configure the font (loads instantly, prevents layout shifts)
 const inter = Inter({ 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
               <main className="flex-grow">
                 {children}
               </main>
+              <Footer />
             </div>
           </CurrencyProvider>
         </BookmarkProvider>

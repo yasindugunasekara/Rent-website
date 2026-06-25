@@ -19,11 +19,7 @@ export default function Hero() {
     }
   };
 
-  // Smooth scroll to the items section
-  const scrollToItems = () => {
-    const filterSection = document.getElementById('items');
-    filterSection?.scrollIntoView({ behavior: 'smooth' });
-  };
+
 
   return (
     <section className="relative bg-surface py-20 md:py-28 px-4 sm:px-6 lg:px-8 border-b border-gray-100">
@@ -63,14 +59,7 @@ export default function Hero() {
         {/* Category Navigation Section */}
         <CategoryNav />
 
-        <div className="mt-12">
-          <button
-            onClick={scrollToItems}
-            className="text-textMuted hover:text-textMain font-medium underline decoration-gray-300 hover:decoration-[#003B95] underline-offset-4 transition-all"
-          >
-            Or explore all available items ↓
-          </button>
-        </div>
+
 
       </div>
     </section>

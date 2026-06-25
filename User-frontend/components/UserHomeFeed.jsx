@@ -133,6 +133,48 @@ const UserHomeFeed = () => {
   // Initialize and handle Filter/Search changes
   useEffect(() => {
     const initFeed = async () => {
+      // Check if we have cached feed state and if we are returning from an ad click
+      const cachedAds = sessionStorage.getItem('home_feed_ads');
+      const cachedPage = sessionStorage.getItem('home_feed_page');
+      const cachedCoords = sessionStorage.getItem('home_feed_coords');
+      const clickedAdId = sessionStorage.getItem('clicked_ad_id');
+
+      if (cachedAds && cachedPage && cachedCoords && clickedAdId) {
+        // Restore all states from cache
+        setAds(JSON.parse(cachedAds));
+        setPage(parseInt(cachedPage, 10));
+        setHasMore(sessionStorage.getItem('home_feed_has_more') === 'true');
+        const coords = JSON.parse(cachedCoords);
+        setUserCoords(coords);
+        setLoading(false);
+
+        // Scroll to the clicked card element smoothly and apply visual focus highlight
+        setTimeout(() => {
+          const element = document.getElementById(`ad-card-${clickedAdId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'instant', block: 'center' });
+            element.classList.add('ring-4', 'ring-[#003B95]/20', 'scale-[0.98]');
+            setTimeout(() => {
+              element.classList.remove('ring-4', 'ring-[#003B95]/20', 'scale-[0.98]');
+            }, 800);
+          } else {
+            const scrollY = sessionStorage.getItem('home_scroll_y');
+            if (scrollY) {
+              window.scrollTo(0, parseInt(scrollY, 10));
+            }
+          }
+          // Clear session data so future visits get fresh items
+          sessionStorage.removeItem('clicked_ad_id');
+          sessionStorage.removeItem('home_scroll_y');
+          sessionStorage.removeItem('home_feed_ads');
+          sessionStorage.removeItem('home_feed_page');
+          sessionStorage.removeItem('home_feed_has_more');
+          sessionStorage.removeItem('home_feed_coords');
+        }, 100);
+
+        return; // Avoid fetching and re-loading
+      }
+
       try {
         setLoading(true);
         setPage(1);
@@ -244,6 +286,19 @@ const UserHomeFeed = () => {
       {/* Filters Section */}
       <FilterBar filters={filters} onApplyFilters={handleApplyFilters} />
 
+      {/* Explore Link */}
+      <div className="flex justify-center -mt-6 mb-10">
+        <button
+          onClick={() => {
+            const gridSection = document.getElementById('items-grid');
+            gridSection?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="text-textMuted hover:text-textMain font-medium underline decoration-gray-300 hover:decoration-[#003B95] underline-offset-4 transition-all"
+        >
+          Or explore all available items ↓
+        </button>
+      </div>
+
       {/* Header Info */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
         <div>
@@ -269,12 +324,22 @@ const UserHomeFeed = () => {
           <p className="text-gray-500 mt-2">Try adjusting your filters or search terms.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div id="items-grid" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
           {ads.map((ad, index) => (
-            <div 
+            <Link 
               key={ad.id}
+              id={`ad-card-${ad.id}`}
+              href={`/items/${ad.id}`}
               ref={index === ads.length - 1 ? lastAdElementRef : null}
-              className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-2"
+              onClick={() => {
+                sessionStorage.setItem('home_scroll_y', window.scrollY.toString());
+                sessionStorage.setItem('clicked_ad_id', ad.id.toString());
+                sessionStorage.setItem('home_feed_ads', JSON.stringify(ads));
+                sessionStorage.setItem('home_feed_page', page.toString());
+                sessionStorage.setItem('home_feed_has_more', hasMore.toString());
+                sessionStorage.setItem('home_feed_coords', JSON.stringify(userCoords));
+              }}
+              className="group block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-2"
             >
               {/* Image Section */}
               <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
@@ -288,18 +353,29 @@ const UserHomeFeed = () => {
                 />
 
                 {/* Bookmark Button */}
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     toggleBookmark(ad.id);
                   }}
-                  className={`absolute top-4 left-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm z-10
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleBookmark(ad.id);
+                    }
+                  }}
+                  className={`absolute top-4 left-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm z-10 cursor-pointer
                     ${isBookmarked(ad.id) 
                       ? "bg-red-500 text-white" 
                       : "bg-white/80 text-gray-400 hover:text-red-500"}`}
+                  title={isBookmarked(ad.id) ? "Remove from Bookmarks" : "Add to Bookmarks"}
                 >
                   <Heart className={`w-4 h-4 ${isBookmarked(ad.id) ? "fill-current" : ""}`} />
-                </button>
+                </div>
 
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
                   <p className="text-blue-600 font-black text-sm">{formatPrice(ad.price)}<span className="text-[10px] text-gray-500 font-medium">/day</span></p>
@@ -327,15 +403,8 @@ const UserHomeFeed = () => {
                 <p className="text-gray-500 text-sm mt-2 line-clamp-2 leading-relaxed">
                   {ad.description}
                 </p>
-                
-                <Link 
-                  href={`/items/${ad.id}`}
-                  className="w-full mt-6 bg-gray-50 text-gray-900 py-3 rounded-xl font-bold text-sm transition-all hover:bg-blue-600 hover:text-white group-hover:shadow-lg active:scale-95 flex items-center justify-center"
-                >
-                  View Details
-                </Link>
               </div>
-            </div>
+            </Link>
           ))}
           {isFetchingMore && [...Array(4)].map((_, i) => <SkeletonCard key={`more-${i}`} />)}
         </div>
