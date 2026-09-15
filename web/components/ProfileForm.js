@@ -5,6 +5,9 @@ import Image from "next/image";
 import { User, Mail, Phone, MapPin, Lock, Camera, Save, CheckCircle2, AlertCircle, Loader2, Globe } from "lucide-react";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
 import { uploadImages, ApiClientError } from "@/lib/api-client";
+import { useCurrency } from "@/lib/CurrencyContext";
+import CurrencySelect from "@/components/CurrencySelect";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 
 // Hoisted out of ProfileForm so it's a stable component identity across
 // renders (a component defined inside a render function gets a new type on
@@ -20,6 +23,8 @@ function ErrorMsg({ msg }) {
 }
 
 export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
+  const { availableCurrencies } = useCurrency();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: initialValues?.name || "",
     email: initialValues?.email || "",
@@ -65,7 +70,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
       const uploaded = files[0];
       if (uploaded) setProfilePic(uploaded.url);
     } catch (err) {
-      const message = err instanceof ApiClientError ? err.message : "Could not upload that image.";
+      const message = err instanceof ApiClientError ? err.message : t("profileForm.uploadFailed");
       setErrors((prev) => ({ ...prev, profilePic: message }));
     } finally {
       setUploadingPic(false);
@@ -74,15 +79,15 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
   const validate = () => {
     const nextErrors = {};
-    if (!sanitizeText(form.name)) nextErrors.name = "Name is required.";
-    if (!sanitizeText(form.email) || !form.email.includes("@")) nextErrors.email = "Enter a valid email.";
-    if (!sanitizePhone(form.phone)) nextErrors.phone = "Valid phone is required.";
-    if (!sanitizeText(form.location)) nextErrors.location = "Location is required.";
+    if (!sanitizeText(form.name)) nextErrors.name = t("profileForm.nameRequired");
+    if (!sanitizeText(form.email) || !form.email.includes("@")) nextErrors.email = t("profileForm.emailInvalid");
+    if (!sanitizePhone(form.phone)) nextErrors.phone = t("profileForm.phoneInvalid");
+    if (!sanitizeText(form.location)) nextErrors.location = t("profileForm.locationRequired");
 
     if (passwords.newPassword) {
-      if (!passwords.currentPassword) nextErrors.currentPassword = "Required to change password.";
-      if (passwords.newPassword.length < 12) nextErrors.newPassword = "Must be at least 12 characters.";
-      if (passwords.newPassword !== passwords.confirmPassword) nextErrors.confirmPassword = "Passwords do not match.";
+      if (!passwords.currentPassword) nextErrors.currentPassword = t("profileForm.currentPasswordRequired");
+      if (passwords.newPassword.length < 12) nextErrors.newPassword = t("profileForm.newPasswordTooShort");
+      if (passwords.newPassword !== passwords.confirmPassword) nextErrors.confirmPassword = t("profileForm.confirmPasswordMismatch");
     }
 
     setErrors(nextErrors);
@@ -98,11 +103,11 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
     try {
       await onSubmit(submissionData);
-      setSuccess("Profile updated successfully!");
+      setSuccess(t("profileForm.profileUpdated"));
       setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
-      setFormError(err instanceof ApiClientError ? err.message : "Could not save your profile. Please try again.");
+      setFormError(err instanceof ApiClientError ? err.message : t("profileForm.saveFailed"));
     }
   };
 
@@ -141,7 +146,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
                 ) : (
                   <>
                     <Camera className="w-6 h-6 text-white mb-1" />
-                    <span className="text-xs text-white font-medium">Change</span>
+                    <span className="text-xs text-white font-medium">{t("profileForm.change")}</span>
                   </>
                 )}
               </label>
@@ -159,13 +164,13 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
           <div className="flex-grow w-full space-y-2">
             <label htmlFor="bio" className="text-sm font-bold text-textMain">
-              About Me (Bio) <span className="text-textMuted font-normal ml-1">- Builds Trust</span>
+              {t("profileForm.aboutMe")} <span className="text-textMuted font-normal ml-1">- {t("profileForm.aboutMeHint")}</span>
             </label>
             <textarea
               id="bio"
               name="bio"
               rows={3}
-              placeholder="e.g. Hi, I'm John! I've been renting high-quality camera gear for 5 years..."
+              placeholder={t("profileForm.bioPlaceholder")}
               value={form.bio}
               onChange={handleFormChange}
               disabled={isSubmitting}
@@ -176,11 +181,11 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
         {/* --- SECTION 2: PERSONAL DETAILS --- */}
         <section className="py-8 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-textMain mb-5">Personal Details</h3>
+          <h3 className="text-lg font-bold text-textMain mb-5">{t("profileForm.personalDetails")}</h3>
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="name">
-                Full Name
+                {t("profileForm.fullName")}
               </label>
               <div className="relative">
                 <User className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -198,7 +203,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="email">
-                Email Address
+                {t("profileForm.emailAddress")}
               </label>
               <div className="relative">
                 <Mail className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -212,12 +217,12 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
                 />
               </div>
               <ErrorMsg msg={errors.email} />
-              <p className="text-xs text-textMuted">Changing this signs you out of every other device.</p>
+              <p className="text-xs text-textMuted">{t("profileForm.emailChangeHint")}</p>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="phone">
-                Phone Number
+                {t("profileForm.phoneNumber")}
               </label>
               <div className="relative">
                 <Phone className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -235,7 +240,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="location">
-                Main Location
+                {t("profileForm.mainLocation")}
               </label>
               <div className="relative">
                 <MapPin className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -253,24 +258,20 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="preferredCurrency">
-                Preferred Currency
+                {t("profileForm.preferredCurrency")}
               </label>
               <div className="relative">
                 <Globe className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
-                <select
+                <CurrencySelect
                   id="preferredCurrency"
                   name="preferredCurrency"
                   value={form.preferredCurrency}
-                  onChange={handleFormChange}
+                  onChange={(value) => setForm((prev) => ({ ...prev, preferredCurrency: value }))}
+                  options={availableCurrencies}
+                  withNames
                   disabled={isSubmitting}
                   className="w-full rounded-xl border border-gray-200 bg-background pl-11 pr-4 py-3 outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 cursor-pointer appearance-none"
-                >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
-                  <option value="LKR">LKR - Sri Lankan Rupee</option>
-                  <option value="JPY">JPY - Japanese Yen</option>
-                </select>
+                />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                   <svg className="w-4 h-4 text-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
@@ -284,14 +285,14 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
         {/* --- SECTION 3: SECURITY (PASSWORD) --- */}
         <section className="pt-8">
           <div className="mb-5">
-            <h3 className="text-lg font-bold text-textMain">Security</h3>
-            <p className="text-sm text-textMuted">Leave empty if you don&apos;t want to change your password.</p>
+            <h3 className="text-lg font-bold text-textMain">{t("profileForm.security")}</h3>
+            <p className="text-sm text-textMuted">{t("profileForm.securityHint")}</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-textMain" htmlFor="currentPassword">
-                Current Password
+                {t("profileForm.currentPassword")}
               </label>
               <div className="relative">
                 <Lock className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -311,7 +312,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="newPassword">
-                New Password
+                {t("profileForm.newPassword")}
               </label>
               <div className="relative">
                 <Lock className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -331,7 +332,7 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-textMain" htmlFor="confirmPassword">
-                Confirm New Password
+                {t("profileForm.confirmNewPassword")}
               </label>
               <div className="relative">
                 <Lock className="w-5 h-5 text-textMuted absolute left-4 top-1/2 -translate-y-1/2" />
@@ -362,12 +363,12 @@ export default function ProfileForm({ initialValues, onSubmit, isSubmitting }) {
           {isSubmitting ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Saving...
+              {t("profileForm.saving")}
             </>
           ) : (
             <>
               <Save className="w-5 h-5" />
-              Save Changes
+              {t("profileForm.saveChanges")}
             </>
           )}
         </button>

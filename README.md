@@ -21,6 +21,18 @@ be deleted (see "Migration cleanup" below).
 - **MinIO** (S3-compatible) for uploaded images.
 - Session auth: opaque tokens in an httpOnly cookie, hashed server-side —
   not JWTs. See `web/lib/auth/session.ts`.
+- **Currency**: one shared list (`web/lib/currencies.ts`) backs every
+  selector (public site, dashboard, profile) — a bundled ~36-currency
+  fallback so it's never empty, superseded by the live exchangerate-api.com
+  list when reachable. Exchange rates cache in Redis and fall back to the
+  last known-good rate (marked `stale`) on a live-fetch failure rather than
+  erroring outright — see `web/lib/currency.ts`.
+- **Language**: English, Sinhala (සිංහල), Tamil (தமிழ்) — a client-side
+  switcher (no URL change, persisted to `localStorage`, same pattern as the
+  currency/bookmark preferences) covering the whole UI. Translation files
+  are `web/messages/{en,si,ta}.json`; see `web/lib/i18n/LocaleContext.jsx`.
+  The Sinhala/Tamil copy was AI-translated — worth a native-speaker pass
+  before this is customer-facing.
 
 ## Quick start
 

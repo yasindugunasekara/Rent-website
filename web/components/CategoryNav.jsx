@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useTranslation } from '../lib/i18n/LocaleContext';
 
 // --- Custom 3D-style SVG illustrated icons ---
 
@@ -399,23 +400,23 @@ const CORE_CATEGORIES = [
 ];
 
 const PANEL_CATEGORIES = [
-  { label: 'Fashion', queryVal: 'fashion', iconName: 'hanger' },
-  { label: 'Sports', queryVal: 'sports', iconName: 'ball' },
-  { label: 'Books', queryVal: 'books', iconName: 'book' },
-  { label: 'Gaming', queryVal: 'gaming', iconName: 'gamepad' },
-  { label: 'Furniture', queryVal: 'furniture', iconName: 'chair' },
-  { label: 'Appliances', queryVal: 'appliances', iconName: 'fridge' },
-  { label: 'Drones', queryVal: 'drones', iconName: 'drone' },
-  { label: 'Event Equipment', queryVal: 'events', iconName: 'mic' },
-  { label: 'Camping Gear', queryVal: 'camping', iconName: 'tent' },
-  { label: 'Audio Systems', queryVal: 'audio', iconName: 'speaker' },
-  { label: 'Industrial Tools', queryVal: 'industrial', iconName: 'hammer' },
-  { label: 'Photography Equipment', queryVal: 'photography', iconName: 'tripod' },
-  { label: 'Kids & Toys', queryVal: 'toys', iconName: 'bear' },
-  { label: 'Pets', queryVal: 'pets', iconName: 'paw' },
-  { label: 'Outdoor', queryVal: 'sports', iconName: 'bicycle' },
-  { label: 'Medical Equipment', queryVal: 'medical', iconName: 'kit' },
-  { label: 'Construction Equipment', queryVal: 'construction', iconName: 'crane' }
+  { id: 'fashion', queryVal: 'fashion', iconName: 'hanger' },
+  { id: 'sports', queryVal: 'sports', iconName: 'ball' },
+  { id: 'books', queryVal: 'books', iconName: 'book' },
+  { id: 'gaming', queryVal: 'gaming', iconName: 'gamepad' },
+  { id: 'furniture', queryVal: 'furniture', iconName: 'chair' },
+  { id: 'appliances', queryVal: 'appliances', iconName: 'fridge' },
+  { id: 'drones', queryVal: 'drones', iconName: 'drone' },
+  { id: 'eventEquipment', queryVal: 'events', iconName: 'mic' },
+  { id: 'campingGear', queryVal: 'camping', iconName: 'tent' },
+  { id: 'audioSystems', queryVal: 'audio', iconName: 'speaker' },
+  { id: 'industrialTools', queryVal: 'industrial', iconName: 'hammer' },
+  { id: 'photographyEquipment', queryVal: 'photography', iconName: 'tripod' },
+  { id: 'kidsToys', queryVal: 'toys', iconName: 'bear' },
+  { id: 'pets', queryVal: 'pets', iconName: 'paw' },
+  { id: 'outdoor', queryVal: 'sports', iconName: 'bicycle' },
+  { id: 'medicalEquipment', queryVal: 'medical', iconName: 'kit' },
+  { id: 'constructionEquipment', queryVal: 'construction', iconName: 'crane' }
 ];
 
 const POPULAR_BADGES = [
@@ -674,6 +675,7 @@ export default function CategoryNav() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const [activeCategory, setActiveCategory] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -772,7 +774,7 @@ export default function CategoryNav() {
           <button
             onClick={() => handleScroll('left')}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1.5 md:-translate-x-3 bg-white hover:bg-gray-50 border border-gray-200/80 shadow-md hover:shadow-lg w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center z-20 text-gray-600 transition-all hover:scale-105 active:scale-95"
-            aria-label="Scroll Left"
+            aria-label={t("categoryNav.scrollLeft")}
           >
             <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
           </button>
@@ -783,7 +785,7 @@ export default function CategoryNav() {
           <button
             onClick={() => handleScroll('right')}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1.5 md:translate-x-3 bg-white hover:bg-gray-50 border border-gray-200/80 shadow-md hover:shadow-lg w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center z-20 text-gray-600 transition-all hover:scale-105 active:scale-95"
-            aria-label="Scroll Right"
+            aria-label={t("categoryNav.scrollRight")}
           >
             <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
           </button>
@@ -813,7 +815,7 @@ export default function CategoryNav() {
                 {/* Label */}
                 <span className={`block mt-3 text-xs md:text-sm font-semibold transition-colors duration-200
                   ${isActive ? 'text-[#003B95] font-bold' : 'text-gray-600'}`}>
-                  {cat.label}
+                  {t(`categories.${cat.id}`)}
                 </span>
               </button>
             );
@@ -835,7 +837,7 @@ export default function CategoryNav() {
             {/* Label */}
             <span className={`block mt-3 text-xs md:text-sm font-semibold transition-colors duration-200
               ${isExpanded ? 'text-indigo-600 font-bold' : 'text-gray-600'}`}>
-              More
+              {t('categoryNav.more')}
             </span>
           </button>
         </div>
@@ -855,7 +857,7 @@ export default function CategoryNav() {
             <button
               onClick={() => setIsExpanded(false)}
               className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Close panel"
+              aria-label={t("categoryNav.closePanel")}
             >
               <X className="w-5 h-5" />
             </button>
@@ -863,11 +865,11 @@ export default function CategoryNav() {
 
           {/* Drawer Grid Display */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {PANEL_CATEGORIES.map((cat, index) => {
+            {PANEL_CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat.queryVal.toLowerCase();
               return (
                 <button
-                  key={index}
+                  key={cat.id}
                   onClick={() => {
                     handleSelectCategory(cat.queryVal);
                     setIsExpanded(false);
@@ -887,9 +889,9 @@ export default function CategoryNav() {
                   <div className="min-w-0">
                     <span className={`block text-xs md:text-sm font-bold truncate leading-snug transition-colors
                       ${isActive ? 'text-[#003B95]' : 'text-gray-800'}`}>
-                      {cat.label}
+                      {t(`categories.${cat.id}`)}
                     </span>
-                    <span className="block text-[10px] text-gray-400 font-medium leading-none mt-0.5">Rent now</span>
+                    <span className="block text-[10px] text-gray-400 font-medium leading-none mt-0.5">{t('categoryNav.rentNow')}</span>
                   </div>
                 </button>
               );
@@ -910,11 +912,11 @@ export default function CategoryNav() {
           <div className="relative bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl flex flex-col max-h-[80vh] z-10 overflow-hidden border border-gray-100 animate-fadeIn">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-              <h3 className="text-lg font-black text-gray-900">All Categories</h3>
+              <h3 className="text-lg font-black text-gray-900">{t('categoryNav.allCategories')}</h3>
               <button
                 onClick={() => setIsExpanded(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Close categories"
+                aria-label={t('categoryNav.closeCategories')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -924,7 +926,7 @@ export default function CategoryNav() {
             <div className="overflow-y-auto p-5 space-y-6 flex-grow no-scrollbar">
               {/* Section: Core Categories */}
               <div>
-                <h4 className="text-xs font-black text-gray-400 tracking-wider uppercase mb-3">Core Categories</h4>
+                <h4 className="text-xs font-black text-gray-400 tracking-wider uppercase mb-3">{t('categoryNav.coreCategories')}</h4>
                 <div className="grid grid-cols-2 gap-3">
                   {CORE_CATEGORIES.map((cat) => {
                     const isActive = activeCategory === cat.queryVal.toLowerCase();
@@ -948,7 +950,7 @@ export default function CategoryNav() {
                           </div>
                         </div>
                         <span className={`text-xs font-bold truncate ${isActive ? 'text-[#003B95]' : 'text-gray-700'}`}>
-                          {cat.label}
+                          {t(`categories.${cat.id}`)}
                         </span>
                       </button>
                     );
@@ -958,13 +960,13 @@ export default function CategoryNav() {
 
               {/* Section: More Categories */}
               <div>
-                <h4 className="text-xs font-black text-gray-400 tracking-wider uppercase mb-3">More Categories</h4>
+                <h4 className="text-xs font-black text-gray-400 tracking-wider uppercase mb-3">{t('categoryNav.moreCategories')}</h4>
                 <div className="grid grid-cols-2 gap-3">
-                  {PANEL_CATEGORIES.map((cat, index) => {
+                  {PANEL_CATEGORIES.map((cat) => {
                     const isActive = activeCategory === cat.queryVal.toLowerCase();
                     return (
                       <button
-                        key={index}
+                        key={cat.id}
                         onClick={() => {
                           handleSelectCategory(cat.queryVal);
                           setIsExpanded(false);
@@ -979,7 +981,7 @@ export default function CategoryNav() {
                           <DrawerIcon type={cat.iconName} />
                         </div>
                         <span className={`text-xs font-bold truncate ${isActive ? 'text-[#003B95]' : 'text-gray-800'}`}>
-                          {cat.label}
+                          {t(`categories.${cat.id}`)}
                         </span>
                       </button>
                     );

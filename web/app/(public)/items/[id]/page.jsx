@@ -17,6 +17,7 @@ import {
 import { useBookmarks } from "@/lib/BookmarkContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getAd, ApiClientError } from "@/lib/api-client";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 
 export default function ItemDetailsPage() {
   const { id } = useParams();
@@ -26,6 +27,7 @@ export default function ItemDetailsPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toggleBookmark, isBookmarked } = useBookmarks();
   const { formatPrice } = useCurrency();
+  const { t } = useTranslation();
   const [showStickyBar, setShowStickyBar] = useState(true);
 
   // IntersectionObserver to hide/show sticky bottom bar when footer is in view
@@ -150,13 +152,13 @@ export default function ItemDetailsPage() {
         <div className="bg-red-50 p-6 rounded-full mb-6">
           <Info className="w-12 h-12 text-red-500" />
         </div>
-        <h3 className="text-2xl font-black text-gray-900 mb-2">Listing not found</h3>
-        <p className="text-gray-500 mb-8">The item you're looking for might have been removed.</p>
+        <h3 className="text-2xl font-black text-gray-900 mb-2">{t("itemDetail.notFoundTitle")}</h3>
+        <p className="text-gray-500 mb-8">{t("itemDetail.notFoundSubtitle")}</p>
         <button
           onClick={() => router.push("/")}
           className="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-all"
         >
-          Back to Home
+          {t("itemDetail.backToHome")}
         </button>
       </div>
     );
@@ -247,7 +249,7 @@ export default function ItemDetailsPage() {
                 {ad.available && (
                   <span className="bg-emerald-50 text-emerald-600 text-xs font-black px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-emerald-100">
                     <BadgeCheck className="w-4 h-4" />
-                    Available
+                    {t("itemDetail.available")}
                   </span>
                 )}
               </div>
@@ -265,7 +267,7 @@ export default function ItemDetailsPage() {
 
               <div className="flex items-baseline gap-2 mb-10 pb-10 border-b border-gray-100">
                 <span className="text-4xl sm:text-5xl font-black text-blue-600">{formatPrice(ad.price)}</span>
-                <span className="text-gray-400 font-bold text-xl">/ day</span>
+                <span className="text-gray-400 font-bold text-xl">{t("itemDetail.perDay")}</span>
               </div>
 
               <div className="grid gap-6 mb-12 sm:grid-cols-2">
@@ -281,7 +283,7 @@ export default function ItemDetailsPage() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-blue-500 transition-colors">
-                        Pick up Location (Get Directions)
+                        {t("itemDetail.pickupLocation")}
                       </p>
                       <p className="text-lg font-bold text-gray-800 leading-tight group-hover:text-blue-600 transition-colors">{ad.location}</p>
                     </div>
@@ -292,7 +294,7 @@ export default function ItemDetailsPage() {
                       <MapPin className="w-6 h-6 text-gray-400" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pick up Location</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t("itemDetail.pickupLocationPlain")}</p>
                       <p className="text-lg font-bold text-gray-800 leading-tight">{ad.location}</p>
                     </div>
                   </div>
@@ -303,7 +305,7 @@ export default function ItemDetailsPage() {
                     <Calendar className="w-6 h-6 text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Posted Date</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t("itemDetail.postedDate")}</p>
                     <p className="text-lg font-bold text-gray-800">
                       {new Date(ad.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
                     </p>
@@ -313,7 +315,7 @@ export default function ItemDetailsPage() {
 
               <div className="mb-6">
                 <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
-                  Description
+                  {t("itemDetail.description")}
                   <div className="h-1 w-8 bg-blue-500 rounded-full"></div>
                 </h3>
                 <p className="text-gray-500 text-lg leading-relaxed whitespace-pre-wrap">{ad.description}</p>
@@ -325,7 +327,7 @@ export default function ItemDetailsPage() {
           <div className="lg:col-span-1 lg:sticky lg:top-28 lg:h-fit">
             {ad.publisher && (
               <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 shadow-sm">
-                <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Contact Publisher</h3>
+                <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-6">{t("itemDetail.contactPublisher")}</h3>
                 <div className="flex items-center gap-5 mb-8">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-md bg-white">
                     {ad.publisher.profilePicUrl ? (
@@ -341,7 +343,7 @@ export default function ItemDetailsPage() {
                     <p className="text-xl font-black text-gray-900 leading-none mb-1">
                       {ad.publisher.firstName} {ad.publisher.lastNameInitial}
                     </p>
-                    <p className="text-sm font-bold text-blue-600">Verified Rental Partner</p>
+                    <p className="text-sm font-bold text-blue-600">{t("itemDetail.verifiedPartner")}</p>
                   </div>
                 </div>
 
@@ -357,7 +359,7 @@ export default function ItemDetailsPage() {
 
                 {ad.publisher.bio && (
                   <div className="mt-8 pt-8 border-t border-gray-200/50">
-                    <p className="text-sm text-gray-500 italic">"{ad.publisher.bio}"</p>
+                    <p className="text-sm text-gray-500 italic">&ldquo;{ad.publisher.bio}&rdquo;</p>
                   </div>
                 )}
               </div>
@@ -378,7 +380,7 @@ export default function ItemDetailsPage() {
             className="flex-1 flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95"
           >
             <Phone className="w-4 h-4" />
-            <span className="truncate">Call</span>
+            <span className="truncate">{t("itemDetail.call")}</span>
           </a>
         )}
 
@@ -390,7 +392,7 @@ export default function ItemDetailsPage() {
             className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-4 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95"
           >
             <MapPin className="w-4 h-4" />
-            <span className="truncate">Directions</span>
+            <span className="truncate">{t("itemDetail.directions")}</span>
           </a>
         )}
       </div>

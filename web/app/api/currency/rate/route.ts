@@ -9,7 +9,7 @@ const querySchema = z.object({ to: currencyCode });
 export const GET = route({
   query: querySchema,
   async handler({ query }) {
-    const rate = await getExchangeRate(query.to);
-    return ok({ rate });
+    const { rate, stale } = await getExchangeRate(query.to);
+    return ok({ rate, stale });
   },
 });

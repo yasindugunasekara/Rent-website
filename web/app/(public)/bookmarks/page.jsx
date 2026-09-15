@@ -6,11 +6,13 @@ import Image from "next/image";
 import { useBookmarks } from "@/lib/BookmarkContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getAdsBatch } from "@/lib/api-client";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 import { Heart, MapPin, Loader2, Bookmark, ShoppingBag, ArrowLeft, Trash2 } from "lucide-react";
 
 export default function BookmarksPage() {
   const { bookmarks, toggleBookmark, isBookmarked, isHydrated } = useBookmarks();
   const { formatPrice } = useCurrency();
+  const { t } = useTranslation();
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +43,7 @@ export default function BookmarksPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-        <p className="text-gray-400 font-bold">Loading your favorites...</p>
+        <p className="text-gray-400 font-bold">{t("bookmarksPage.loadingFavorites")}</p>
       </div>
     );
   }
@@ -53,12 +55,12 @@ export default function BookmarksPage() {
         <div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
             <Bookmark className="w-8 h-8 text-blue-600 fill-current" />
-            My Bookmarks
+            {t("bookmarksPage.title")}
           </h2>
-          <p className="text-gray-500 mt-1 font-medium">Saved rentals you're interested in</p>
+          <p className="text-gray-500 mt-1 font-medium">{t("bookmarksPage.subtitle")}</p>
         </div>
         <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-bold border border-blue-100">
-          {ads.length} items saved
+          {t("bookmarksPage.itemsSaved", { count: ads.length })}
         </div>
       </div>
 
@@ -67,14 +69,14 @@ export default function BookmarksPage() {
           <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
             <Bookmark className="w-10 h-10 text-gray-300" />
           </div>
-          <h3 className="text-2xl font-black text-gray-900 mb-2">No bookmarks yet</h3>
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto">Items you bookmark will appear here for quick access later.</p>
+          <h3 className="text-2xl font-black text-gray-900 mb-2">{t("bookmarksPage.emptyTitle")}</h3>
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto">{t("bookmarksPage.emptySubtitle")}</p>
           <Link
             href="/"
             className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:bg-gray-800 transition-all hover:-translate-y-1 active:scale-95"
           >
             <ArrowLeft className="w-5 h-5" />
-            Explore Rentals
+            {t("bookmarksPage.exploreRentals")}
           </Link>
         </div>
       ) : (
@@ -114,7 +116,7 @@ export default function BookmarksPage() {
                     }
                   }}
                   className="absolute top-4 left-4 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm z-10 bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50 cursor-pointer"
-                  title="Remove from Bookmarks"
+                  title={t("bookmarksPage.removeFromBookmarks")}
                 >
                   <Trash2 className="w-4 h-4" />
                 </div>
@@ -122,7 +124,7 @@ export default function BookmarksPage() {
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm">
                   <p className="text-blue-600 font-black text-sm">
                     {formatPrice(ad.price)}
-                    <span className="text-[10px] text-gray-500 font-medium">/day</span>
+                    <span className="text-[10px] text-gray-500 font-medium">{t("homeFeed.perDay")}</span>
                   </p>
                 </div>
               </div>

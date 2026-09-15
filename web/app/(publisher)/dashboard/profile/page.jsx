@@ -3,11 +3,12 @@
 import { useState } from "react";
 import ProfileForm from "@/components/ProfileForm";
 import { useDashboard } from "@/lib/DashboardContext";
-// Modern UI සඳහා Icon එකතු කළා
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 import { UserCircle2, Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
   const { profile, updateProfile, loading } = useDashboard();
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data) => {
@@ -20,7 +21,7 @@ export default function ProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-        <p className="text-textMuted font-medium">Loading your profile...</p>
+        <p className="text-textMuted font-medium">{t("dashboardProfile.loadingProfile")}</p>
       </div>
     );
   }
@@ -35,10 +36,10 @@ export default function ProfilePage() {
         </div>
         <div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-textMain tracking-tight">
-            Account Settings
+            {t("dashboardProfile.title")}
           </h2>
           <p className="text-sm sm:text-base text-textMuted mt-1 leading-relaxed">
-            Manage your personal information, profile picture, and account security.
+            {t("dashboardProfile.subtitle")}
           </p>
         </div>
       </div>

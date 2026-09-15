@@ -7,6 +7,7 @@ import { categoryOptions } from "@/lib/data";
 import { sanitizePhone, sanitizeText } from "@/lib/sanitize";
 import { useDashboard } from "@/lib/DashboardContext";
 import { uploadImages, ApiClientError } from "@/lib/api-client";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 
 // Dynamically import LocationPicker with SSR disabled
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
@@ -56,6 +57,7 @@ export default function AdForm({
   submitIcon: SubmitIcon,
 }) {
   const { currency, exchangeRate } = useDashboard();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     ...initialForm,
     ...initialValues,
@@ -111,7 +113,7 @@ export default function AdForm({
 
       const room = MAX_IMAGES - form.images.length;
       if (room <= 0) {
-        setErrors((prev) => ({ ...prev, images: `You can upload at most ${MAX_IMAGES} images.` }));
+        setErrors((prev) => ({ ...prev, images: t("adForm.maxImages", { max: MAX_IMAGES }) }));
         return;
       }
       const toUpload = files.slice(0, room);
@@ -123,13 +125,13 @@ export default function AdForm({
         const next = uploaded.map((f) => ({ localKey: f.key, key: f.key, url: f.url }));
         setForm((prev) => ({ ...prev, images: [...prev.images, ...next] }));
       } catch (err) {
-        const message = err instanceof ApiClientError ? err.message : "Upload failed. Please try again.";
+        const message = err instanceof ApiClientError ? err.message : t("adForm.uploadFailed");
         setErrors((prev) => ({ ...prev, images: message }));
       } finally {
         setUploading(false);
       }
     },
-    [form.images.length],
+    [form.images.length, t],
   );
 
   const removeImage = useCallback((localKey) => {
@@ -138,14 +140,14 @@ export default function AdForm({
 
   const validate = () => {
     const nextErrors = {};
-    if (!sanitizeText(form.title)) nextErrors.title = "Title is required.";
-    if (!sanitizeText(form.description)) nextErrors.description = "Description is required.";
-    if (!Number(form.price) || Number(form.price) <= 0) nextErrors.price = "Enter a valid price.";
-    if (!sanitizeText(form.location)) nextErrors.location = "Please select a location on the map.";
-    if (!sanitizeText(form.category)) nextErrors.category = "Category is required.";
+    if (!sanitizeText(form.title)) nextErrors.title = t("adForm.titleRequired");
+    if (!sanitizeText(form.description)) nextErrors.description = t("adForm.descriptionRequired");
+    if (!Number(form.price) || Number(form.price) <= 0) nextErrors.price = t("adForm.priceInvalid");
+    if (!sanitizeText(form.location)) nextErrors.location = t("adForm.locationRequired");
+    if (!sanitizeText(form.category)) nextErrors.category = t("adForm.categoryRequired");
     if (!sanitizePhone(form.contactNumber))
-      nextErrors.contactNumber = "Valid contact number is required.";
-    if (form.images.length === 0) nextErrors.images = "At least one image is required.";
+      nextErrors.contactNumber = t("adForm.contactNumberInvalid");
+    if (form.images.length === 0) nextErrors.images = t("adForm.imagesRequired");
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -162,17 +164,17 @@ export default function AdForm({
     <form id={formId} onSubmit={handleSubmit} className="space-y-8">
       {/* --- BASIC INFORMATION --- */}
       <section className="space-y-5">
-        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 dark:border-zinc-800 pb-2">Basic Information</h3>
+        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 dark:border-zinc-800 pb-2">{t("adForm.basicInformation")}</h3>
 
         <div className="space-y-2">
           <label htmlFor="title" className="text-sm font-bold text-textMain">
-            Item Title <span className="text-red-500">*</span>
+            {t("adForm.itemTitle")} <span className="text-red-500">*</span>
           </label>
           <input
             id="title"
             name="title"
             disabled={isSubmitting}
-            placeholder="e.g. Sony Alpha A7III Camera"
+            placeholder={t("adForm.titlePlaceholder")}
             value={form.title}
             onChange={handleChange}
             className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200
@@ -183,14 +185,14 @@ export default function AdForm({
 
         <div className="space-y-2">
           <label htmlFor="description" className="text-sm font-bold text-textMain">
-            Description <span className="text-red-500">*</span>
+            {t("adForm.description")} <span className="text-red-500">*</span>
           </label>
           <textarea
             id="description"
             name="description"
             disabled={isSubmitting}
             rows={4}
-            placeholder="Describe the item..."
+            placeholder={t("adForm.descriptionPlaceholder")}
             value={form.description}
             onChange={handleChange}
             className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200
@@ -209,7 +211,7 @@ export default function AdForm({
       <section className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <label htmlFor="price" className="text-sm font-bold text-textMain">
-            Price (per day) <span className="text-red-500">*</span>
+            {t("adForm.pricePerDay")} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-textMuted font-bold text-xs">{currency}</span>
@@ -230,7 +232,7 @@ export default function AdForm({
 
         <div className="space-y-2">
           <label htmlFor="contactNumber" className="text-sm font-bold text-textMain">
-            Contact Number <span className="text-red-500">*</span>
+            {t("adForm.contactNumber")} <span className="text-red-500">*</span>
           </label>
           <input
             id="contactNumber"
@@ -249,7 +251,7 @@ export default function AdForm({
       {/* --- CATEGORY --- */}
       <section className="space-y-2">
         <label htmlFor="category" className="text-sm font-bold text-textMain">
-          Category <span className="text-red-500">*</span>
+          {t("adForm.category")} <span className="text-red-500">*</span>
         </label>
         <select
           id="category"
@@ -260,10 +262,10 @@ export default function AdForm({
           className={`w-full rounded-xl border bg-background px-4 py-3 outline-none transition-all duration-200 cursor-pointer
             ${errors.category ? "border-red-500 focus:ring-red-500/20" : "border-gray-200 dark:border-zinc-700 focus:border-primary focus:ring-4 focus:ring-primary/10"}`}
         >
-          <option value="">Select category</option>
+          <option value="">{t("adForm.selectCategory")}</option>
           {categoryOptions.map((category) => (
             <option key={category} value={category}>
-              {category}
+              {t(`categories.${category}`)}
             </option>
           ))}
         </select>
@@ -272,8 +274,8 @@ export default function AdForm({
 
       {/* --- SMART LOCATION PICKER --- */}
       <section className="space-y-4">
-        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 dark:border-zinc-800 pb-2">Location Details</h3>
-        <p className="text-sm text-textMuted">Search or pinpoint your item&apos;s location on the map.</p>
+        <h3 className="text-lg font-bold text-textMain border-b border-gray-100 dark:border-zinc-800 pb-2">{t("adForm.locationDetails")}</h3>
+        <p className="text-sm text-textMuted">{t("adForm.locationHint")}</p>
 
         <LocationPicker
           onLocationSelect={handleLocationSelect}
@@ -286,7 +288,7 @@ export default function AdForm({
       {/* --- IMAGES --- */}
       <section className="space-y-4">
         <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-2">
-          <h3 className="text-lg font-bold text-textMain">Item Images</h3>
+          <h3 className="text-lg font-bold text-textMain">{t("adForm.itemImages")}</h3>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -294,7 +296,7 @@ export default function AdForm({
             className="flex items-center gap-2 text-sm font-bold text-primary hover:text-primaryHover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
-            {uploading ? "Uploading..." : "Add Images"}
+            {uploading ? t("adForm.uploading") : t("adForm.addImages")}
           </button>
           <input
             ref={fileInputRef}
@@ -305,7 +307,7 @@ export default function AdForm({
             onChange={handleFilesSelected}
           />
         </div>
-        <p className="text-xs text-textMuted">Up to {MAX_IMAGES} images, 5MB each. JPEG, PNG, WebP, or AVIF.</p>
+        <p className="text-xs text-textMuted">{t("adForm.imagesHint", { max: MAX_IMAGES })}</p>
 
         {form.images.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -334,8 +336,8 @@ export default function AdForm({
       {/* --- AVAILABILITY TOGGLE --- */}
       <section className="flex items-center justify-between rounded-2xl bg-background border border-gray-100 dark:border-zinc-800 px-6 py-5">
         <div>
-          <p className="text-base font-bold text-textMain">Item Availability</p>
-          <p className="text-sm text-textMuted">Allow users to see and rent this item immediately.</p>
+          <p className="text-base font-bold text-textMain">{t("adForm.itemAvailability")}</p>
+          <p className="text-sm text-textMuted">{t("adForm.availabilityHint")}</p>
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
@@ -360,7 +362,7 @@ export default function AdForm({
           {isSubmitting ? (
             <>
               <Loader2 className="w-6 h-6 animate-spin" />
-              Processing...
+              {t("adForm.processing")}
             </>
           ) : (
             <>

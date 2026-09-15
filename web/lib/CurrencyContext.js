@@ -2,16 +2,22 @@
 
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { getCurrencyCodes, getExchangeRate } from "@/lib/api-client";
+import { FALLBACK_CURRENCIES } from "@/lib/currencies";
 
 const CurrencyContext = createContext(null);
 
 export function CurrencyProvider({ children }) {
   const [currency, setCurrency] = useState("USD");
   const [exchangeRate, setExchangeRate] = useState(1.0);
-  const [availableCurrencies, setAvailableCurrencies] = useState([]);
+  const [rateStale, setRateStale] = useState(false);
+  // Seeded with the static fallback list (lib/currencies.ts) so every
+  // consumer — the public site's FloatingCurrency modal, and the dashboard's
+  // CurrencySelect — has a populated list from the first render, not an
+  // empty one waiting on a network call that might fail.
+  const [availableCurrencies, setAvailableCurrencies] = useState(FALLBACK_CURRENCIES);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage on mount and fetch currencies
+  // Load from localStorage on mount and fetch the live (richer) currency list
   useEffect(() => {
     try {
       const savedCurrency = localStorage.getItem("user-currency");
@@ -20,9 +26,13 @@ export function CurrencyProvider({ children }) {
       // Storage unavailable — fall back to USD.
     }
 
+    // On success this supersedes the fallback list with the full live set;
+    // on failure the fallback list (already in state) just stays as-is.
     getCurrencyCodes()
-      .then(setAvailableCurrencies)
-      .catch((error) => console.error("Error fetching currencies:", error));
+      .then((codes) => {
+        if (codes.length > 0) setAvailableCurrencies(codes);
+      })
+      .catch((error) => console.error("Error fetching currencies, using fallback list:", error));
 
     setIsHydrated(true);
   }, []);
@@ -31,10 +41,14 @@ export function CurrencyProvider({ children }) {
   useEffect(() => {
     if (currency === "USD") {
       setExchangeRate(1.0);
+      setRateStale(false);
       return;
     }
     getExchangeRate(currency)
-      .then((data) => setExchangeRate(data.rate))
+      .then((data) => {
+        setExchangeRate(data.rate);
+        setRateStale(Boolean(data.stale));
+      })
       .catch((error) => console.error("Error fetching exchange rate:", error));
   }, [currency]);
 
@@ -55,6 +69,7 @@ export function CurrencyProvider({ children }) {
       setCurrency,
       availableCurrencies,
       isHydrated,
+      rateStale,
       formatPrice: (usdPrice) => {
         const converted = usdPrice * exchangeRate;
         const rounded = Math.round(converted / 10) * 10;
@@ -63,7 +78,7 @@ export function CurrencyProvider({ children }) {
         return `${rounded.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${currency}`;
       },
     }),
-    [currency, exchangeRate, availableCurrencies, isHydrated],
+    [currency, exchangeRate, availableCurrencies, isHydrated, rateStale],
   );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;

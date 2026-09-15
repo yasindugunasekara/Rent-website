@@ -6,19 +6,26 @@ import { useState, useEffect } from "react";
 import { Menu, X, LayoutDashboard, PlusCircle, List, User, LogOut, Globe } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useDashboard } from "@/lib/DashboardContext";
+import { useCurrency } from "@/lib/CurrencyContext";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
+import CurrencySelect from "@/components/CurrencySelect";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/create", label: "Create Ad", icon: PlusCircle },
-  { href: "/dashboard/history", label: "My Listings", icon: List },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
+const LINKS = [
+  { href: "/dashboard", key: "dashboardNav.dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/create", key: "dashboardNav.createAd", icon: PlusCircle },
+  { href: "/dashboard/history", key: "dashboardNav.myListings", icon: List },
+  { href: "/dashboard/profile", key: "dashboardNav.profile", icon: User },
 ];
 
 export default function DashboardNavbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { currency, setCurrency } = useDashboard();
+  // Shared list (live, falling back to the static set) — see lib/currencies.ts.
+  const { availableCurrencies } = useCurrency();
   const { signOut } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     signOut("/login");
@@ -42,13 +49,13 @@ export default function DashboardNavbar() {
               Rent<span className="text-primary">Anything</span>
             </h1>
             <span className="hidden sm:inline-block text-xs font-bold text-textMuted border-l border-gray-300 pl-2 ml-1 uppercase tracking-wider">
-              Publisher
+              {t("dashboardNav.publisher")}
             </span>
           </Link>
 
           {/* --- DESKTOP MENU --- */}
           <nav className="hidden items-center gap-1 md:flex">
-            {links.map((link) => {
+            {LINKS.map((link) => {
               const active = pathname === link.href;
               const Icon = link.icon;
               return (
@@ -60,7 +67,7 @@ export default function DashboardNavbar() {
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${active ? "text-primary" : "text-textMuted"}`} />
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               );
             })}
@@ -70,25 +77,17 @@ export default function DashboardNavbar() {
             {/* Currency Selector */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
               <Globe className="w-4 h-4 text-textMuted" />
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="bg-transparent text-sm font-bold text-textMain outline-none cursor-pointer"
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="LKR">LKR</option>
-                <option value="JPY">JPY</option>
-              </select>
+              <CurrencySelect value={currency} onChange={setCurrency} options={availableCurrencies} />
             </div>
+
+            <LanguageSwitcher variant="light" />
 
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 transition-all duration-200"
             >
               <LogOut className="w-4 h-4" />
-              Sign Out
+              {t("dashboardNav.signOut")}
             </button>
           </nav>
 
@@ -109,7 +108,7 @@ export default function DashboardNavbar() {
           }`}
         >
           <nav className="flex flex-col p-4 space-y-1">
-            {links.map((link) => {
+            {LINKS.map((link) => {
               const active = pathname === link.href;
               const Icon = link.icon;
               return (
@@ -121,25 +120,25 @@ export default function DashboardNavbar() {
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-textMuted"}`} />
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               );
             })}
 
             <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-textMuted border border-gray-100 bg-gray-50/50">
               <Globe className="w-5 h-5" />
-              <span className="flex-1">Currency</span>
-              <select
+              <span className="flex-1">{t("dashboardNav.currency")}</span>
+              <CurrencySelect
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                onChange={setCurrency}
+                options={availableCurrencies}
                 className="bg-transparent font-bold text-textMain outline-none cursor-pointer"
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="LKR">LKR</option>
-                <option value="JPY">JPY</option>
-              </select>
+              />
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-textMuted border border-gray-100 bg-gray-50/50">
+              <span className="flex-1">{t("nav.changeLanguage")}</span>
+              <LanguageSwitcher variant="light" />
             </div>
 
             <button
@@ -147,7 +146,7 @@ export default function DashboardNavbar() {
               className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-red-500 hover:bg-red-50 transition-all"
             >
               <LogOut className="w-5 h-5" />
-              Sign Out
+              {t("dashboardNav.signOut")}
             </button>
           </nav>
         </div>

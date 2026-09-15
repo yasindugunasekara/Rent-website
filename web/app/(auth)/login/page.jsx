@@ -6,13 +6,14 @@ import Link from "next/link";
 import { Mail, Lock, Loader2, AlertCircle, ShoppingBag, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import * as api from "@/lib/api-client";
 import { useAuth } from "@/lib/AuthContext";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 
-const OAUTH_ERROR_MESSAGES = {
-  google_not_configured: "Google sign-in isn't set up on this server.",
-  invalid_oauth_state: "That sign-in link expired. Please try again.",
-  google_email_unverified: "Your Google email isn't verified. Please verify it with Google first.",
-  email_in_use: "That email already has an account. Sign in with your password instead.",
-  google_auth_failed: "Google sign-in failed. Please try again.",
+const OAUTH_ERROR_KEYS = {
+  google_not_configured: "auth.errorGoogleNotConfigured",
+  invalid_oauth_state: "auth.errorInvalidOauthState",
+  google_email_unverified: "auth.errorGoogleEmailUnverified",
+  email_in_use: "auth.errorEmailInUse",
+  google_auth_failed: "auth.errorGoogleAuthFailed",
 };
 
 // useSearchParams() opts the page out of static rendering unless wrapped in
@@ -37,11 +38,13 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refresh } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (searchParams.get("registered")) setJustRegistered(true);
     const oauthError = searchParams.get("error");
-    if (oauthError) setError(OAUTH_ERROR_MESSAGES[oauthError] ?? "Sign-in failed. Please try again.");
+    if (oauthError) setError(t(OAUTH_ERROR_KEYS[oauthError] ?? "auth.errorSignInFailed"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleSubmit = async (e) => {
@@ -57,7 +60,7 @@ function LoginForm() {
       router.push(next);
       router.refresh();
     } catch (err) {
-      setError(err instanceof api.ApiClientError ? err.message : "An unexpected error occurred.");
+      setError(err instanceof api.ApiClientError ? err.message : t("auth.unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -79,13 +82,13 @@ function LoginForm() {
             <h1 className="text-2xl font-black text-gray-900 tracking-tighter">
               Rent<span className="text-blue-600">Anything</span>
             </h1>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Publisher Login</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">{t("auth.publisherLogin")}</p>
           </div>
 
           {justRegistered && (
             <div className="mb-4 flex items-center gap-2 bg-blue-50 border border-blue-100 p-3 rounded-xl text-blue-700 text-xs font-bold">
               <CheckCircle2 className="w-4 h-4" />
-              Account ready. Please sign in.
+              {t("auth.accountReady")}
             </div>
           )}
 
@@ -98,7 +101,7 @@ function LoginForm() {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("auth.email")}</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600" />
                 <input
@@ -114,7 +117,7 @@ function LoginForm() {
 
             <div className="space-y-1.5">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Password</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t("auth.password")}</label>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600" />
@@ -141,13 +144,13 @@ function LoginForm() {
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white text-sm font-black py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-blue-900/10 hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("auth.signIn")}
             </button>
           </form>
 
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-gray-100"></div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">OR</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t("auth.or")}</span>
             <div className="h-px flex-1 bg-gray-100"></div>
           </div>
 
@@ -161,14 +164,14 @@ function LoginForm() {
               <path d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </a>
 
           <div className="mt-6 text-center">
             <p className="text-xs font-bold text-gray-400">
-              New here?{" "}
+              {t("auth.newHere")}{" "}
               <Link href="/register" className="text-blue-600 hover:underline underline-offset-4 font-black">
-                Join as Publisher
+                {t("auth.joinAsPublisher")}
               </Link>
             </p>
           </div>

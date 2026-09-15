@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Search, MapPin, Loader2, Navigation } from "lucide-react";
+import { useTranslation } from "../lib/i18n/LocaleContext";
 
 // Explicitly define custom marker icon to fix Next.js 404 issue
 const customIcon = new L.Icon({
@@ -29,6 +30,7 @@ function MapUpdater({ center }) {
 }
 
 export default function LocationPicker({ onLocationSelect, initialLocation, initialAddress }) {
+  const { t } = useTranslation();
   const [position, setPosition] = useState(
     initialLocation || { lat: 6.9271, lng: 79.8612 } // Default to Colombo
   );
@@ -55,7 +57,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
   const reverseGeocode = async (lat, lng) => {
     try {
       setLoading(true);
-      setStatusText("Fetching address...");
+      setStatusText(t("locationPicker.fetchingAddress"));
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
@@ -63,11 +65,11 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
       if (data && data.display_name) {
         setAddress(data.display_name);
       } else {
-        setAddress("Address not found");
+        setAddress(t("locationPicker.addressNotFound"));
       }
     } catch (error) {
       console.error("Reverse geocoding error:", error);
-      setAddress("Error fetching address");
+      setAddress(t("locationPicker.addressFetchError"));
     } finally {
       setLoading(false);
       setStatusText("");
@@ -80,25 +82,25 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
 
     try {
       setLoading(true);
-      setStatusText("Searching...");
+      setStatusText(t("locationPicker.searching"));
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           searchQuery
         )}`
       );
       const data = await res.json();
-      
+
       if (data && data.length > 0) {
         const { lat, lon, display_name } = data[0];
         const newPos = { lat: parseFloat(lat), lng: parseFloat(lon) };
         setPosition(newPos);
         setAddress(display_name);
       } else {
-        alert("Location not found. Please try a different search term.");
+        alert(t("locationPicker.locationNotFound"));
       }
     } catch (error) {
       console.error("Geocoding error:", error);
-      alert("Error searching for location. Please check your network.");
+      alert(t("locationPicker.geocodingError"));
     } finally {
       setLoading(false);
       setStatusText("");
@@ -115,12 +117,12 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
   // HTML5 Geolocation API
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
+      alert(t("locationPicker.geolocationUnsupported"));
       return;
     }
 
     setLoading(true);
-    setStatusText("Detecting location...");
+    setStatusText(t("locationPicker.detectingLocation"));
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -129,7 +131,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
       },
       (err) => {
         console.error("Geolocation error:", err);
-        alert("Unable to retrieve your location. Please check permissions.");
+        alert(t("locationPicker.geolocationError"));
         setLoading(false);
         setStatusText("");
       }
@@ -158,7 +160,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
         <div className="flex-1 relative">
           <input
             type="text"
-            placeholder="Search city or address..."
+            placeholder={t("locationPicker.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -172,7 +174,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
             disabled={loading || !searchQuery.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary hover:bg-primaryHover text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
           >
-            Search
+            {t("locationPicker.search")}
           </button>
         </div>
 
@@ -182,12 +184,12 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
           disabled={loading}
           className="group flex items-center justify-center gap-2 bg-primary hover:bg-primaryHover text-white px-6 py-3 rounded-xl font-extrabold transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0"
         >
-          {loading && statusText === "Detecting location..." ? (
+          {loading && statusText === t("locationPicker.detectingLocation") ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <Navigation className="w-5 h-5 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
           )}
-          <span>Use My Location</span>
+          <span>{t("locationPicker.useMyLocation")}</span>
         </button>
       </div>
 
@@ -226,10 +228,10 @@ export default function LocationPicker({ onLocationSelect, initialLocation, init
         <div className="flex-1">
           <p className="font-bold text-textMain flex items-center gap-1.5 mb-1">
             <MapPin className="w-4 h-4 text-primary" />
-            Selected Address
+            {t("locationPicker.selectedAddress")}
           </p>
           <p className="text-textMuted line-clamp-2 leading-relaxed">
-            {address || "Drag the marker or search to pinpoint an exact address."}
+            {address || t("locationPicker.addressHint")}
           </p>
         </div>
       </div>

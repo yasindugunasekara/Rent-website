@@ -13,16 +13,21 @@ export function DashboardProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [currency, setCurrencyState] = useState("USD");
   const [exchangeRate, setExchangeRate] = useState(1.0);
+  const [rateStale, setRateStale] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (currency === "USD") {
       setExchangeRate(1.0);
+      setRateStale(false);
       return;
     }
     api
       .getExchangeRate(currency)
-      .then((data) => setExchangeRate(data.rate))
+      .then((data) => {
+        setExchangeRate(data.rate);
+        setRateStale(Boolean(data.stale));
+      })
       .catch((error) => console.error("Error fetching exchange rate:", error));
   }, [currency]);
 
@@ -84,6 +89,7 @@ export function DashboardProvider({ children }) {
         }
       },
       exchangeRate,
+      rateStale,
       formatPrice: (usdPrice) => {
         const converted = usdPrice * exchangeRate;
         const rounded = Math.round(converted / 10) * 10;
@@ -190,7 +196,7 @@ export function DashboardProvider({ children }) {
       getAdById: (id) => ads.find((ad) => String(ad.id) === String(id)),
       refreshAds: fetchMyAds,
     }),
-    [ads, profile, loading, currency, exchangeRate, isAuthenticated, fetchMyAds, fetchProfile],
+    [ads, profile, loading, currency, exchangeRate, rateStale, isAuthenticated, fetchMyAds, fetchProfile],
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

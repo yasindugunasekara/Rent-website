@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { Bookmark, Menu, X, PlusCircle, LogIn, UserPlus, LayoutDashboard, LogOut } from "lucide-react";
 import FloatingCurrency from "./FloatingCurrency";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { useBookmarks } from "../lib/BookmarkContext";
 import { useAuth } from "../lib/AuthContext";
+import { useTranslation } from "../lib/i18n/LocaleContext";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -12,6 +14,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { bookmarks, isHydrated } = useBookmarks();
   const { isAuthenticated, signOut } = useAuth();
+  const { t } = useTranslation();
   const pathname = usePathname();
   const isBookmarksPage = pathname === "/bookmarks";
 
@@ -34,7 +37,7 @@ export default function Navbar() {
               <FloatingCurrency />
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover/tooltip:block z-[110]">
                 <div className="bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-md shadow-xl whitespace-nowrap uppercase tracking-wider border border-white/10">
-                  Change Currency
+                  {t("nav.changeCurrency")}
                 </div>
                 <div className="w-2 h-2 bg-gray-900 rotate-45 absolute -top-1 left-1/2 -translate-x-1/2 border-l border-t border-white/10"></div>
               </div>
@@ -42,12 +45,10 @@ export default function Navbar() {
 
             {/* Language (Desktop) */}
             <div className="relative group/tooltip hidden sm:block">
-              <button className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition-colors">
-                <img src="https://flagcdn.com/us.svg" alt="English" className="w-5 h-5 rounded-full object-cover" />
-              </button>
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover/tooltip:block z-[110]">
+              <LanguageSwitcher variant="dark" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover/tooltip:block z-[110] pointer-events-none">
                 <div className="bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-md shadow-xl whitespace-nowrap uppercase tracking-wider border border-white/10">
-                  Language: EN
+                  {t("nav.changeLanguage")}
                 </div>
                 <div className="w-2 h-2 bg-gray-900 rotate-45 absolute -top-1 left-1/2 -translate-x-1/2 border-l border-t border-white/10"></div>
               </div>
@@ -70,7 +71,7 @@ export default function Navbar() {
               </Link>
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover/tooltip:block z-[110]">
                 <div className="bg-gray-900 text-white text-[10px] font-black px-2.5 py-1.5 rounded-md shadow-xl whitespace-nowrap uppercase tracking-wider border border-white/10">
-                  {isBookmarksPage ? "Close Bookmarks" : "My Bookmarks"}
+                  {isBookmarksPage ? t("nav.closeBookmarks") : t("nav.myBookmarks")}
                 </div>
                 <div className="w-2 h-2 bg-gray-900 rotate-45 absolute -top-1 left-1/2 -translate-x-1/2 border-l border-t border-white/10"></div>
               </div>
@@ -82,7 +83,7 @@ export default function Navbar() {
                 href="/dashboard/create"
                 className="px-4 py-2 border border-white rounded-md text-sm font-medium hover:bg-white/10 transition-colors"
               >
-                List your Items
+                {t("nav.listItem")}
               </Link>
               {isAuthenticated ? (
                 <>
@@ -91,14 +92,14 @@ export default function Navbar() {
                     className="flex items-center gap-1.5 px-4 py-2 bg-white text-[#003B95] rounded-md text-sm font-bold hover:bg-gray-100 transition-colors"
                   >
                     <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
+                    {t("nav.dashboard")}
                   </Link>
                   <button
                     onClick={() => signOut("/")}
                     className="flex items-center gap-1.5 px-4 py-2 border border-white rounded-md text-sm font-medium hover:bg-white/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
-                    Sign out
+                    {t("nav.signOut")}
                   </button>
                 </>
               ) : (
@@ -107,13 +108,13 @@ export default function Navbar() {
                     href="/register"
                     className="px-4 py-2 bg-white text-[#003B95] rounded-md text-sm font-bold hover:bg-gray-100 transition-colors"
                   >
-                    Register
+                    {t("nav.register")}
                   </Link>
                   <Link
                     href="/login"
                     className="px-4 py-2 bg-white text-[#003B95] rounded-md text-sm font-bold hover:bg-gray-100 transition-colors"
                   >
-                    Sign in
+                    {t("nav.signIn")}
                   </Link>
                 </>
               )}
@@ -139,8 +140,13 @@ export default function Navbar() {
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-colors text-left"
             >
               <PlusCircle className="w-5 h-5" />
-              <span className="font-medium">List your item</span>
+              <span className="font-medium">{t("nav.listItem")}</span>
             </Link>
+
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/10">
+              <span className="font-medium">{t("nav.changeLanguage")}</span>
+              <LanguageSwitcher variant="dark" />
+            </div>
 
             {isAuthenticated ? (
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/10 mt-4">
@@ -149,14 +155,14 @@ export default function Navbar() {
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-[#003B95] rounded-xl font-bold hover:bg-gray-100 transition-colors"
                 >
                   <LayoutDashboard className="w-5 h-5" />
-                  <span>Dashboard</span>
+                  <span>{t("nav.dashboard")}</span>
                 </Link>
                 <button
                   onClick={() => signOut("/")}
                   className="flex items-center justify-center gap-2 px-4 py-3 border border-white rounded-xl font-bold hover:bg-white/10 transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
-                  <span>Sign out</span>
+                  <span>{t("nav.signOut")}</span>
                 </button>
               </div>
             ) : (
@@ -166,14 +172,14 @@ export default function Navbar() {
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-[#003B95] rounded-xl font-bold hover:bg-gray-100 transition-colors"
                 >
                   <UserPlus className="w-5 h-5" />
-                  <span>Register</span>
+                  <span>{t("nav.register")}</span>
                 </Link>
                 <Link
                   href="/login"
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-[#003B95] rounded-xl font-bold hover:bg-gray-100 transition-colors"
                 >
                   <LogIn className="w-5 h-5" />
-                  <span>Sign in</span>
+                  <span>{t("nav.signIn")}</span>
                 </Link>
               </div>
             )}

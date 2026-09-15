@@ -3,9 +3,11 @@
 import { Search, MapPin, ChevronDown, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCurrency } from '../lib/CurrencyContext';
+import { useTranslation } from '../lib/i18n/LocaleContext';
 
 export default function FilterBar({ filters, onApplyFilters }) {
   const { currency } = useCurrency();
+  const { t } = useTranslation();
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const [localLocation, setLocalLocation] = useState(filters.location || '');
   const [localCategory, setLocalCategory] = useState(filters.category || '');
@@ -61,12 +63,12 @@ export default function FilterBar({ filters, onApplyFilters }) {
   };
 
   const PRICE_OPTIONS = [
-    { label: `Under 50 ${currency}`, value: '0-50' },
-    { label: `50 - 100 ${currency}`, value: '50-100' },
-    { label: `100 - 250 ${currency}`, value: '100-250' },
-    { label: `250 - 500 ${currency}`, value: '250-500' },
-    { label: `500 - 1000 ${currency}`, value: '500-1000' },
-    { label: `1000+ ${currency}`, value: '1000+' }
+    { label: t('filterBar.priceUnder', { amount: 50, currency }), value: '0-50' },
+    { label: t('filterBar.priceBetween', { min: 50, max: 100, currency }), value: '50-100' },
+    { label: t('filterBar.priceBetween', { min: 100, max: 250, currency }), value: '100-250' },
+    { label: t('filterBar.priceBetween', { min: 250, max: 500, currency }), value: '250-500' },
+    { label: t('filterBar.priceBetween', { min: 500, max: 1000, currency }), value: '500-1000' },
+    { label: t('filterBar.priceOver', { amount: 1000, currency }), value: '1000+' }
   ];
 
   return (
@@ -78,7 +80,7 @@ export default function FilterBar({ filters, onApplyFilters }) {
           <Search className="absolute left-4 text-gray-400 w-4 h-4 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search with title"
+            placeholder={t('filterBar.searchPlaceholder')}
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -96,7 +98,7 @@ export default function FilterBar({ filters, onApplyFilters }) {
             onClick={handleApply}
             className="absolute right-0 top-0 bottom-0 bg-[#003B95] hover:bg-[#002b6e] text-white text-sm font-bold px-5 transition-colors flex items-center justify-center"
           >
-            Search
+            {t('filterBar.searchButton')}
           </button>
         </div>
 
@@ -105,7 +107,7 @@ export default function FilterBar({ filters, onApplyFilters }) {
           <MapPin className="absolute left-4 text-gray-400 w-4 h-4 pointer-events-none" />
           <input
             type="text"
-            placeholder="Location"
+            placeholder={t('filterBar.locationPlaceholder')}
             value={localLocation}
             onChange={(e) => setLocalLocation(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -123,9 +125,9 @@ export default function FilterBar({ filters, onApplyFilters }) {
               ${showPriceDropdown ? 'border-[#003B95] ring-2 ring-[#003B95]/15' : 'border-gray-200 hover:border-gray-300'}`}
           >
             <span className="truncate">
-              {localPriceRange 
-                ? PRICE_OPTIONS.find(o => o.value === localPriceRange)?.label 
-                : 'Filter by price'}
+              {localPriceRange
+                ? PRICE_OPTIONS.find(o => o.value === localPriceRange)?.label
+                : t('filterBar.filterByPrice')}
             </span>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showPriceDropdown ? 'rotate-180' : ''}`} />
           </button>
@@ -158,7 +160,7 @@ export default function FilterBar({ filters, onApplyFilters }) {
           onClick={handleClearAll}
           className="w-full lg:w-auto px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer shadow-sm active:scale-95 text-center shrink-0 flex-none"
         >
-          Clear filters
+          {t('filterBar.clearFilters')}
         </button>
 
       </div>

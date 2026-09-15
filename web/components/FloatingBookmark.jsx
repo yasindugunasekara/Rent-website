@@ -4,18 +4,20 @@ import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { useBookmarks } from "../lib/BookmarkContext";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "../lib/i18n/LocaleContext";
 
 export default function FloatingBookmark() {
   const { bookmarks, isHydrated } = useBookmarks();
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   if (pathname !== "/") return null;
 
   return (
-    <Link 
-      href="/bookmarks" 
+    <Link
+      href="/bookmarks"
       className="absolute top-4 right-4 sm:right-6 lg:right-8 z-50 p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-      title="My Bookmarks"
+      title={t("nav.myBookmarks")}
     >
       <Bookmark className="w-6 h-6" />
       {isHydrated && bookmarks.length > 0 && (

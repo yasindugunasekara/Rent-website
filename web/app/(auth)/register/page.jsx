@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Loader2, AlertCircle, ShoppingBag } from "lucide-react";
 import * as api from "@/lib/api-client";
+import { useTranslation } from "@/lib/i18n/LocaleContext";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -17,17 +18,18 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("auth.passwordsNoMatch"));
       return;
     }
     if (formData.password.length < 12) {
-      setError("Password must be at least 12 characters and include a letter and a number.");
+      setError(t("auth.passwordTooShort"));
       return;
     }
 
@@ -41,7 +43,7 @@ export default function RegisterPage() {
       });
       router.push("/login?registered=true");
     } catch (err) {
-      setError(err instanceof api.ApiClientError ? err.message : "An unexpected error occurred.");
+      setError(err instanceof api.ApiClientError ? err.message : t("auth.unexpectedError"));
     } finally {
       setLoading(false);
     }
@@ -68,7 +70,7 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-black text-gray-900 tracking-tighter leading-none">
                 Rent<span className="text-blue-600">Anything</span>
               </h1>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Publisher Account</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">{t("auth.publisherAccount")}</p>
             </div>
           </div>
 
@@ -82,7 +84,7 @@ export default function RegisterPage() {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">First Name</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("auth.firstName")}</label>
                 <input
                   name="firstName"
                   required
@@ -93,7 +95,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Last Name</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("auth.lastName")}</label>
                 <input
                   name="lastName"
                   required
@@ -106,7 +108,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("auth.email")}</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600" />
                 <input
@@ -123,7 +125,7 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Password</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("auth.password")}</label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600" />
                   <input
@@ -139,7 +141,7 @@ export default function RegisterPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Confirm</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t("auth.confirmPassword")}</label>
                 <input
                   name="confirmPassword"
                   type="password"
@@ -151,20 +153,20 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-            <p className="text-[10px] font-bold text-gray-400 ml-1">At least 12 characters, with a letter and a number.</p>
+            <p className="text-[10px] font-bold text-gray-400 ml-1">{t("auth.passwordHint")}</p>
 
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white text-sm font-black py-4 rounded-xl transition-all duration-300 shadow-lg shadow-blue-900/10 hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 mt-4"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Publisher Account"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("auth.createAccount")}
             </button>
           </form>
 
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-gray-100"></div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">OR</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t("auth.or")}</span>
             <div className="h-px flex-1 bg-gray-100"></div>
           </div>
 
@@ -178,14 +180,14 @@ export default function RegisterPage() {
               <path d="M5.84 14.09c-.22-.67-.35-1.39-.35-2.09s.13-1.42.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </a>
 
           <div className="mt-8 text-center border-t border-gray-50 pt-6">
             <p className="text-xs font-bold text-gray-400">
-              Already a publisher?{" "}
+              {t("auth.alreadyPublisher")}{" "}
               <Link href="/login" className="text-blue-600 hover:underline underline-offset-4 font-black">
-                Sign In
+                {t("auth.signIn")}
               </Link>
             </p>
           </div>

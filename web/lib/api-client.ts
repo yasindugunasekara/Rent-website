@@ -169,7 +169,7 @@ export function getCurrencyCodes() {
 }
 
 export function getExchangeRate(to: string) {
-  return request<{ rate: number }>(`/api/currency/rate${qs({ to })}`);
+  return request<{ rate: number; stale: boolean }>(`/api/currency/rate${qs({ to })}`);
 }
 
 // ---- Auth --------------------------------------------------------------

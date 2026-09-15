@@ -1,14 +1,15 @@
 "use client";
 
-import { Globe, X, Search } from "lucide-react";
+import { X, Search, AlertTriangle } from "lucide-react";
 import { useCurrency } from "../lib/CurrencyContext";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-
-const SUGGESTED_CURRENCIES = ["USD", "EUR", "GBP", "LKR", "JPY", "AUD", "CAD"];
+import { useTranslation } from "../lib/i18n/LocaleContext";
+import { SUGGESTED_CURRENCY_CODES } from "../lib/currencies";
 
 export default function FloatingCurrency() {
-  const { currency, setCurrency, availableCurrencies } = useCurrency();
+  const { currency, setCurrency, availableCurrencies, rateStale } = useCurrency();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const pathname = usePathname();
@@ -50,11 +51,11 @@ export default function FloatingCurrency() {
   );
 
   const suggested = filteredAvailable.filter((c) =>
-    SUGGESTED_CURRENCIES.includes(c.code)
+    SUGGESTED_CURRENCY_CODES.includes(c.code)
   );
   
   const others = filteredAvailable.filter(
-    (c) => !SUGGESTED_CURRENCIES.includes(c.code)
+    (c) => !SUGGESTED_CURRENCY_CODES.includes(c.code)
   );
 
   const handleSelect = (code) => {
@@ -92,8 +93,8 @@ export default function FloatingCurrency() {
             {/* Header */}
             <div className="p-6 border-b border-gray-100 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Select your currency</h2>
-                <button 
+                <h2 className="text-xl font-bold text-gray-900">{t("floatingCurrency.title")}</h2>
+                <button
                   onClick={() => {
                     setIsOpen(false);
                     setSearchQuery("");
@@ -109,25 +110,32 @@ export default function FloatingCurrency() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search currency code or name..."
+                  placeholder={t("floatingCurrency.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
                 />
               </div>
+
+              {rateStale && (
+                <div className="flex items-center gap-2 text-amber-600 text-xs font-semibold bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  {t("floatingCurrency.rateOutdated")}
+                </div>
+              )}
             </div>
 
             {/* Scrollable Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
               {filteredAvailable.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No currencies found for "{searchQuery}"</p>
+                  <p className="text-gray-500">{t("floatingCurrency.noCurrenciesFound", { query: searchQuery })}</p>
                 </div>
               ) : isSearching ? (
                 /* Search Results Section */
                 <section>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                    Search Results
+                    {t("floatingCurrency.searchResults")}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {filteredAvailable.map((c) => (
@@ -148,7 +156,7 @@ export default function FloatingCurrency() {
                   {suggested.length > 0 && (
                     <section>
                       <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                        Suggested for you
+                        {t("floatingCurrency.suggestedForYou")}
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         {suggested.map((c) => (
@@ -167,7 +175,7 @@ export default function FloatingCurrency() {
                   {/* All Currencies Section */}
                   <section>
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                      All currencies
+                      {t("floatingCurrency.allCurrencies")}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {(others.length > 0 ? others : filteredAvailable).map((c) => (
