@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563eb;
+  --color-primaryHover: #1d4ed8;
+  --color-brand: #003b95;
+  --color-brandHover: #002a6b;
+  --color-success: #10b981;
+  --color-successHover: #059669;
+  --color-danger: #dc2626;
+  --color-dangerHover: #b91c1c;
+  --color-background: #f9fafb;
+  --color-surface: #ffffff;
+  --color-textMain: #111827;
+  --color-textMuted: #6b7280;
+}
+
+@layer base {
+  html,
+  body {
+    @apply max-w-[100vw] overflow-x-hidden;
+  }
+
+  body {
+    @apply bg-background text-textMain antialiased;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.25s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+.sticky-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}

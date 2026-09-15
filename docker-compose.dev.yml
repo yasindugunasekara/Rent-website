@@ -1,0 +1,30 @@
+# Development overlay: hot reload via bind mount, exposed db/redis ports for
+# local tooling (psql, redis-cli, Prisma Studio). Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+name: rent-website
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  web:
+    build:
+      target: builder
+    command: ["npm", "run", "dev"]
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
+      - web_next_cache:/app/.next
+    ports:
+      - "3000:3000"
+
+volumes:
+  web_node_modules:
+  web_next_cache:
