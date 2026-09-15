@@ -34,8 +34,21 @@ docker compose up --build
 ```
 
 Then open http://localhost:3000. The `migrate` service runs Prisma
-migrations and seeds two demo publisher accounts (see
-`web/prisma/seed.ts` for credentials) before `web` starts.
+migrations and seeds two demo publisher accounts before `web` starts:
+
+| Email | Password |
+|---|---|
+| `ava.publisher@example.com` | `DevPassword123!` |
+| `sam.rentals@example.com` | `DevPassword123!` |
+
+Sign in at `/login` with either — both land on `/dashboard`, each scoped to
+their own listings (see `web/prisma/seed.ts` to change or add accounts).
+Registration (`/register`) and login are rate-limited (3/hour and 5/15min
+per IP); if you hit that while testing, clear it with:
+
+```bash
+docker compose exec redis redis-cli -a "$(grep REDIS_PASSWORD .env | cut -d= -f2-)" --no-auth-warning FLUSHDB
+```
 
 **Dev mode** (hot reload, exposed `db`/`redis` ports):
 
