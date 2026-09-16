@@ -6,9 +6,10 @@ now a single Next.js app (`web/`) with the backend implemented as Next API
 routes, backed by Postgres, Redis, and MinIO — all runnable with one
 `docker compose up`.
 
-The old `backend/`, `User-frontend/`, and `publisher-dashboard/` directories
-are retained until the new app is verified in your environment, then should
-be deleted (see "Migration cleanup" below).
+The old `backend/` (ASP.NET Core), `User-frontend/`, and `publisher-dashboard/`
+directories have been removed now that `web/` is verified — see "Migrated
+from a .NET backend" below for what to do about the secrets that were
+committed in that old backend's config.
 
 ## Stack
 
@@ -98,17 +99,23 @@ validation) against a running instance:
 BASE_URL=http://localhost:3000 bash web/scripts/smoke.sh
 ```
 
-## Migration cleanup (do this after verifying `web/` works for you)
+## Migrated from a .NET backend
 
-1. **Rotate the three secrets that leaked in `backend/appsettings.json`**
-   (committed in git history): the Postgres password, the JWT signing key,
-   and the ExchangeRate API key. Moving them to `.env` is not enough —
-   generate new values and, for the ExchangeRate key, revoke the old one in
-   their dashboard.
-2. Delete `backend/`, `User-frontend/`, `publisher-dashboard/` as separate
-   commits.
-3. If this repository is or will be shared, consider rewriting git history
-   (`git filter-repo`) to purge the leaked secrets, not just the files.
+This app replaces a separate ASP.NET Core backend + two Next.js frontends
+(`backend/`, `User-frontend/`, `publisher-dashboard/`), now removed from the
+working tree — their history is still in `git log` if you need to refer
+back to them.
+
+**Still outstanding — only you can do this:**
+
+1. **Rotate the three secrets that leaked in the old `backend/appsettings.json`**
+   (still in git history even though the file is gone): the Postgres
+   password, the JWT signing key, and the ExchangeRate API key. Generate new
+   values and, for the ExchangeRate key, revoke the old one in their
+   dashboard.
+2. If this repository is or will be shared, consider rewriting git history
+   (`git filter-repo`) to purge those secrets from old commits, not just the
+   current files.
 
 ## Project layout
 

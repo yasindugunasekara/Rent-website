@@ -3,11 +3,6 @@
 .env.local
 .env.*.local
 
-# .NET build output (was previously untracked only by omission — these were
-# committed in git history and must be removed with `git rm -r --cached`)
-backend/bin/
-backend/obj/
-
 # OS/editor noise
 .DS_Store
 Thumbs.db
